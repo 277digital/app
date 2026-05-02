@@ -9,6 +9,7 @@ const app = express();
 const db = new sqlite3.Database("db.sqlite");
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(session({
@@ -32,9 +33,35 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS clients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
-      email TEXT
+      email TEXT,
+      company_name TEXT,
+      jib TEXT,
+      pdv TEXT,
+      phone TEXT,
+      address TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  db.all("PRAGMA table_info(clients)", [], (err, columns) => {
+    if (err) return;
+
+    const existing = new Set(columns.map((column) => column.name));
+    const missingColumns = {
+      company_name: "TEXT",
+      jib: "TEXT",
+      pdv: "TEXT",
+      phone: "TEXT",
+      address: "TEXT",
+      created_at: "TEXT"
+    };
+
+    Object.entries(missingColumns).forEach(([column, type]) => {
+      if (!existing.has(column)) {
+        db.run(`ALTER TABLE clients ADD COLUMN ${column} ${type}`);
+      }
+    });
+  });
 
   const hash = bcrypt.hashSync("admin123", 10);
 
@@ -353,6 +380,14 @@ app.get("/logout", (req, res) => {
   });
 });
 
+function requireAuth(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  next();
+}
+
 // 🏠 ROOT
 app.get("/", (req, res) => {
   if (!req.session.user) return res.redirect("/login");
@@ -365,39 +400,97 @@ app.get("/app", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// 👥 CLIENTS LIST
-app.get("/clients", (req, res) => {
-  if (!req.session.user) return res.redirect("/login");
+app.get("/api/dashboard", requireAuth, (req, res) => {
+  db.get("SELECT COUNT(*) AS total_clients FROM clients", [], (err, summary) => {
+    if (err) {
+      return res.status(500).json({ error: "Could not load dashboard summary" });
+    }
 
-  db.all("SELECT * FROM clients", [], (err, rows) => {
-    let list = rows.map(c => `<div>${c.name} (${c.email})</div>`).join("");
+    db.all(
+      `SELECT
+        id,
+        COALESCE(company_name, name, '') AS company_name,
+        email,
+        phone,
+        created_at
+       FROM clients
+       ORDER BY id DESC
+       LIMIT 5`,
+      [],
+      (clientsErr, recentClients) => {
+        if (clientsErr) {
+          return res.status(500).json({ error: "Could not load recent clients" });
+        }
 
-    res.send(`
-      <h1>Clients</h1>
-
-      <form method="POST" action="/clients">
-        <input name="name" placeholder="Name"/><br><br>
-        <input name="email" placeholder="Email"/><br><br>
-        <button>Add Client</button>
-      </form>
-
-      <hr>
-
-      ${list}
-
-      <br><br>
-      <a href="/app">Back</a>
-    `);
+        res.json({
+          totalClients: summary.total_clients || 0,
+          totalServices: 0,
+          totalInvoices: 0,
+          totalRevenue: 0,
+          recentClients
+        });
+      }
+    );
   });
 });
 
-// ➕ ADD CLIENT
-app.post("/clients", (req, res) => {
-  db.run(
-    "INSERT INTO clients (name, email) VALUES (?, ?)",
-    [req.body.name, req.body.email],
-    () => res.redirect("/clients")
+app.get("/api/clients", requireAuth, (req, res) => {
+  db.all(
+    `SELECT
+      id,
+      COALESCE(company_name, name, '') AS company_name,
+      jib,
+      pdv,
+      email,
+      phone,
+      address,
+      created_at
+     FROM clients
+     ORDER BY id DESC`,
+    [],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: "Could not load clients" });
+      }
+
+      res.json(rows);
+    }
   );
+});
+
+app.post("/api/clients", requireAuth, (req, res) => {
+  const companyName = (req.body.company_name || "").trim();
+
+  if (!companyName) {
+    return res.status(400).json({ error: "Company name is required" });
+  }
+
+  db.run(
+    `INSERT INTO clients
+      (name, company_name, jib, pdv, email, phone, address)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      companyName,
+      companyName,
+      (req.body.jib || "").trim(),
+      (req.body.pdv || "").trim(),
+      (req.body.email || "").trim(),
+      (req.body.phone || "").trim(),
+      (req.body.address || "").trim()
+    ],
+    function insertClient(err) {
+      if (err) {
+        return res.status(500).json({ error: "Could not add client" });
+      }
+
+      res.status(201).json({ id: this.lastID });
+    }
+  );
+});
+
+app.get("/clients", (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
+  res.redirect("/app#clients");
 });
 
 // 🚀 START SERVER

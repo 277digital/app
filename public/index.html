@@ -2,202 +2,1039 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>277 App</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>277 Digital App</title>
 <style>
+:root {
+  --page: #191817;
+  --shell: #080808;
+  --panel: #242322;
+  --panel-2: #2d2c2b;
+  --panel-3: #353331;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --text: #f4f2ef;
+  --muted: #9a9690;
+  --soft: #c8c3bb;
+  --orange: #ff4d22;
+  --orange-2: #ff7a35;
+  --green: #8ee6b1;
+  --radius: 8px;
+}
+
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-sizing: border-box;
 }
 
 body {
-    height: 100vh;
-    background: linear-gradient(135deg, #e5e7eb, #d1d5db);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  margin: 0;
+  min-height: 100vh;
+  background: var(--page);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* MAIN WRAPPER */
-.wrapper {
-    width: 1200px;
-    height: 720px;
-    background: rgba(255,255,255,0.6);
-    backdrop-filter: blur(20px);
-    border-radius: 25px;
-    display: flex;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.15);
-    overflow: hidden;
+button,
+input,
+textarea {
+  font: inherit;
 }
 
-/* SIDEBAR */
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  width: min(1200px, calc(100vw - 40px));
+  height: min(760px, calc(100vh - 56px));
+  min-height: 680px;
+  margin: 28px auto;
+  display: grid;
+  grid-template-columns: 244px 1fr;
+  overflow: hidden;
+  background: var(--shell);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.46);
+}
+
 .sidebar {
-    width: 260px;
-    padding: 30px;
-    border-right: 1px solid rgba(0,0,0,0.05);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 20px;
+  padding: 18px 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: #050505;
 }
 
-/* PROFILE */
-.profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 40px;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
 }
 
-.profile img {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    margin-right: 12px;
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
 }
 
-.profile div {
-    font-size: 14px;
+.brand-logo img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
-/* MENU */
-.menu div {
-    padding: 12px 15px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: 0.2s;
+.brand-title {
+  font-size: 17px;
+  font-weight: 800;
 }
 
-.menu div:hover {
-    background: rgba(0,0,0,0.05);
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #1f1e1e;
+  font-size: 13px;
 }
 
-.menu .active {
-    background: white;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+.nav {
+  display: grid;
+  align-content: start;
+  gap: 8px;
 }
 
-/* CONTENT */
+.nav button {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--soft);
+  background: transparent;
+  text-align: left;
+}
+
+.nav button:hover {
+  background: #181818;
+}
+
+.nav button.active {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(100deg, #474544, #222120);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.nav-icon {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 13px;
+}
+
+.sidebar-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, #282625, #111);
+}
+
+.sidebar-card strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.sidebar-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.main {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 76px 1fr;
+  background: #171615;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: #090909;
+}
+
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn,
+.share-btn {
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: #2a2928;
+}
+
+.icon-btn {
+  width: 38px;
+}
+
+.share-btn {
+  padding: 0 16px;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--orange), var(--orange-2));
+  font-weight: 800;
+}
+
 .content {
-    flex: 1;
-    padding: 40px;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
 }
 
-/* HEADER */
-.header {
-    margin-bottom: 30px;
+.view {
+  display: none;
 }
 
-.header h1 {
-    font-size: 32px;
+.view.active {
+  display: block;
 }
 
-.header p {
-    color: #6b7280;
+.section-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
 }
 
-/* GRID */
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+.section-head h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  letter-spacing: 0;
 }
 
-/* CARD */
-.card {
-    background: white;
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+.section-head p {
+  margin: 0;
+  color: var(--muted);
 }
 
-/* BIG NUMBER */
-.big {
-    font-size: 48px;
-    font-weight: 700;
+.select-pill {
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--soft);
+  background: #333130;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
-/* BUTTON */
-.btn {
-    display: inline-block;
-    margin-top: 15px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    background: #111827;
-    color: white;
-    text-decoration: none;
-    font-size: 14px;
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
 }
 
-/* LIST */
-.list {
-    margin-top: 15px;
+.metric-card {
+  position: relative;
+  min-height: 150px;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #252423, #1b1a19);
 }
 
-.list div {
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
+.metric-card.primary {
+  background:
+    radial-gradient(circle at 88% 20%, rgba(255, 255, 255, 0.26), transparent 22%),
+    linear-gradient(135deg, var(--orange), #ff421c 52%, #ffd4c7);
+}
+
+.metric-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 34px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16));
+}
+
+.metric-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--soft);
+  font-size: 14px;
+}
+
+.metric-card.primary .metric-label {
+  color: #fff;
+}
+
+.metric-value {
+  margin-top: 26px;
+  font-size: 32px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.metric-note {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.metric-card.primary .metric-note {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.4fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, #252423, #1b1a19);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.panel-head {
+  min-height: 58px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.panel-subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.add-btn {
+  min-height: 36px;
+  border: 0;
+  border-radius: 18px;
+  padding: 0 16px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--orange), var(--orange-2));
+  font-weight: 800;
+}
+
+.wallet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.mini-card {
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, #343230, #242322);
+}
+
+.mini-card span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mini-card strong {
+  display: block;
+  margin-top: 18px;
+  font-size: 20px;
+}
+
+.chart {
+  height: 268px;
+  padding: 12px 18px 18px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  gap: 14px;
+}
+
+.bar-wrap {
+  display: grid;
+  gap: 10px;
+  align-items: end;
+  justify-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.bar {
+  width: 100%;
+  max-width: 58px;
+  min-height: 44px;
+  border-radius: 8px 8px 6px 6px;
+  background: linear-gradient(180deg, #555250, #232221);
+}
+
+.bar.hot {
+  background: linear-gradient(180deg, var(--orange), #ff7844 58%, #f3e8e1);
+  box-shadow: 0 0 32px rgba(255, 77, 34, 0.42);
+}
+
+.table-panel {
+  overflow: hidden;
+}
+
+.table-toolbar {
+  display: flex;
+  gap: 12px;
+}
+
+.table-search {
+  width: 210px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  color: var(--text);
+  background: #343230;
+  outline: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: left;
+  font-size: 13px;
+}
+
+th {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.035);
+  font-weight: 600;
+}
+
+td {
+  color: var(--soft);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 14px;
+  padding: 0 10px;
+  color: var(--green);
+  background: rgba(142, 230, 177, 0.08);
+  font-size: 12px;
+}
+
+.clients-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 16px;
+}
+
+.client-form {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field label {
+  color: var(--soft);
+  font-size: 12px;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  color: var(--text);
+  background: #171615;
+  outline: none;
+}
+
+.field textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: rgba(255, 77, 34, 0.66);
+  box-shadow: 0 0 0 3px rgba(255, 77, 34, 0.12);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.empty-state {
+  padding: 24px 16px;
+  color: var(--muted);
+}
+
+.placeholder {
+  min-height: 460px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  text-align: center;
+}
+
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 20;
+  max-width: 320px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: #fff;
+  background: #2c2a29;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: 0.2s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 980px) {
+  body {
+    background: #111;
+  }
+
+  .app-shell {
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    margin: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    grid-template-rows: auto auto;
+  }
+
+  .nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow-x: auto;
+  }
+
+  .nav button {
+    justify-content: center;
+  }
+
+  .nav button span:last-child,
+  .sidebar-card,
+  .search {
+    display: none;
+  }
+
+  .main {
+    grid-template-rows: auto 1fr;
+  }
+
+  .topbar {
+    min-height: 68px;
+  }
+
+  .metric-grid,
+  .dashboard-grid,
+  .clients-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .content {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .section-head,
+  .panel-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .metric-grid {
+    gap: 12px;
+  }
+
+  .form-grid,
+  .wallet-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .top-actions .icon-btn {
+    display: none;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3),
+  th:nth-child(4),
+  td:nth-child(4) {
+    display: none;
+  }
 }
 </style>
-
 </head>
-
 <body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo"><img src="/277lg.jpg" alt="277"></div>
+      <div class="brand-title">277 Digital</div>
+    </div>
+    <div class="search">Search</div>
+    <nav class="nav" aria-label="Main navigation">
+      <button class="active" data-view-target="dashboard"><span class="nav-icon">D</span><span>Dashboard</span></button>
+      <button data-view-target="clients"><span class="nav-icon">C</span><span>Clients</span></button>
+      <button data-view-target="services"><span class="nav-icon">S</span><span>Services</span></button>
+      <button data-view-target="invoices"><span class="nav-icon">I</span><span>Invoices</span></button>
+      <button data-view-target="history"><span class="nav-icon">H</span><span>History</span></button>
+    </nav>
+    <div class="sidebar-card">
+      <strong>Business workspace</strong>
+      <p>Track companies, services, invoices, and billing activity from one place.</p>
+    </div>
+  </aside>
 
-<div class="wrapper">
+  <main class="main">
+    <header class="topbar">
+      <div class="crumb"><span>277 Digital</span><span>/</span><strong id="crumb-title">Dashboard</strong></div>
+      <div class="top-actions">
+        <button class="icon-btn" title="Help">?</button>
+        <button class="icon-btn" title="Messages">@</button>
+        <button class="icon-btn" title="Alerts">!</button>
+        <button class="share-btn" type="button">Share</button>
+      </div>
+    </header>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="profile">
-            <img src="https://i.pravatar.cc/100">
+    <section class="content">
+      <div class="view active" id="view-dashboard">
+        <div class="section-head">
+          <div>
+            <h1>Overview</h1>
+            <p>Summary of your business activity.</p>
+          </div>
+          <div class="select-pill">This Month</div>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card primary">
+            <div class="metric-label"><span>Clients</span><span>...</span></div>
+            <div class="metric-value" id="metric-clients">0</div>
+            <div class="metric-note">Companies in your database</div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-label"><span>Services</span><span>...</span></div>
+            <div class="metric-value" id="metric-services">0</div>
+            <div class="metric-note">Service catalog coming next</div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-label"><span>Invoices</span><span>...</span></div>
+            <div class="metric-value" id="metric-invoices">0</div>
+            <div class="metric-note">Invoice module coming next</div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Quick Stats</h2>
+                <p class="panel-subtitle">Current workspace snapshot</p>
+              </div>
+              <button class="add-btn" data-view-target="clients">Add New</button>
+            </div>
+            <div class="wallet-grid">
+              <div class="mini-card"><span>Open clients</span><strong id="mini-clients">0</strong><span>Active</span></div>
+              <div class="mini-card"><span>Revenue</span><strong id="mini-revenue">0 BAM</strong><span>Planned</span></div>
+              <div class="mini-card"><span>Services</span><strong>0</strong><span>Next phase</span></div>
+              <div class="mini-card"><span>Invoices</span><strong>0</strong><span>Next phase</span></div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Activity Flow</h2>
+                <p class="panel-subtitle">Visual overview for the month</p>
+              </div>
+              <div class="select-pill">Yearly</div>
+            </div>
+            <div class="chart" aria-label="Activity chart">
+              <div class="bar-wrap"><div class="bar" style="height: 42%"></div><span>Jan</span></div>
+              <div class="bar-wrap"><div class="bar" style="height: 36%"></div><span>Feb</span></div>
+              <div class="bar-wrap"><div class="bar hot" style="height: 78%"></div><span>Mar</span></div>
+              <div class="bar-wrap"><div class="bar" style="height: 38%"></div><span>Apr</span></div>
+              <div class="bar-wrap"><div class="bar" style="height: 50%"></div><span>May</span></div>
+              <div class="bar-wrap"><div class="bar" style="height: 26%"></div><span>Jun</span></div>
+              <div class="bar-wrap"><div class="bar" style="height: 40%"></div><span>Jul</span></div>
+            </div>
+          </article>
+        </div>
+
+        <article class="panel table-panel">
+          <div class="panel-head">
             <div>
-                <strong>277 Digital</strong><br>
-                admin@277digital.com
+              <h2 class="panel-title">Recent Clients</h2>
+              <p class="panel-subtitle">Latest companies added to the system</p>
             </div>
-        </div>
-
-        <div class="menu">
-            <div class="active">Dashboard</div>
-            <div>Clients</div>
-            <div>Services</div>
-            <div>Invoices</div>
-        </div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="content">
-
-        <div class="header">
-            <h1>DashboardCS</h1>
-            <p>Overview of your business</p>
-        </div>
-
-        <div class="grid">
-            <div class="card">
-                <h3>Total Invoices</h3>
-                <div class="big">12</div>
-                <a class="btn">View</a>
+            <div class="table-toolbar">
+              <input class="table-search" id="dashboard-client-search" placeholder="Search">
             </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-clients-table"></tbody>
+          </table>
+          <div class="empty-state" id="recent-empty">No clients yet. Add your first client from the Clients tab.</div>
+        </article>
+      </div>
 
-            <div class="card">
-                <h3>Total Revenue</h3>
-                <div class="big">€2,450</div>
-                <a class="btn">Details</a>
-            </div>
+      <div class="view" id="view-clients">
+        <div class="section-head">
+          <div>
+            <h1>Clients</h1>
+            <p>Add and manage companies you work with.</p>
+          </div>
+          <div class="select-pill" id="client-count">0 clients</div>
         </div>
 
-        <div class="card" style="margin-top:20px;">
-            <h3>Recent Activity</h3>
-
-            <div class="list">
-                <div>Invoice #001 created</div>
-                <div>Client added</div>
-                <div>Service updated</div>
+        <div class="clients-layout">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Add Client</h2>
+                <p class="panel-subtitle">Company and billing details</p>
+              </div>
             </div>
+            <form class="client-form" id="client-form">
+              <div class="field">
+                <label for="company_name">Naziv firme</label>
+                <input id="company_name" name="company_name" required placeholder="277 Digital d.o.o.">
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="jib">JIB broj</label>
+                  <input id="jib" name="jib" placeholder="4200000000000">
+                </div>
+                <div class="field">
+                  <label for="pdv">PDV broj</label>
+                  <input id="pdv" name="pdv" placeholder="200000000000">
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="email">Email</label>
+                  <input id="email" name="email" type="email" placeholder="info@firma.ba">
+                </div>
+                <div class="field">
+                  <label for="phone">Telefon</label>
+                  <input id="phone" name="phone" placeholder="+387 61 000 000">
+                </div>
+              </div>
+              <div class="field">
+                <label for="address">Adresa</label>
+                <textarea id="address" name="address" placeholder="Ulica i broj, grad"></textarea>
+              </div>
+              <button class="add-btn" type="submit">Add Client</button>
+            </form>
+          </article>
+
+          <article class="panel table-panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Client List</h2>
+                <p class="panel-subtitle">Company registry</p>
+              </div>
+              <input class="table-search" id="client-search" placeholder="Search clients">
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Naziv firme</th>
+                  <th>JIB</th>
+                  <th>PDV</th>
+                  <th>Email</th>
+                  <th>Telefon</th>
+                </tr>
+              </thead>
+              <tbody id="clients-table"></tbody>
+            </table>
+            <div class="empty-state" id="clients-empty">No clients have been added yet.</div>
+          </article>
         </div>
+      </div>
 
-    </div>
+      <div class="view" id="view-services">
+        <div class="placeholder">
+          <div>
+            <h1>Services</h1>
+            <p>Service catalog will be built in the next step.</p>
+          </div>
+        </div>
+      </div>
 
+      <div class="view" id="view-invoices">
+        <div class="placeholder">
+          <div>
+            <h1>Invoices</h1>
+            <p>Invoice creation and tracking will come after services.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="view" id="view-history">
+        <div class="placeholder">
+          <div>
+            <h1>History</h1>
+            <p>Activity history will collect changes and invoice events here.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
 
+<div class="toast" id="toast"></div>
+
+<script>
+const state = {
+  clients: [],
+  dashboard: null
+};
+
+const views = document.querySelectorAll(".view");
+const navButtons = document.querySelectorAll("[data-view-target]");
+const crumbTitle = document.getElementById("crumb-title");
+const toast = document.getElementById("toast");
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add("show");
+  window.setTimeout(() => toast.classList.remove("show"), 2600);
+}
+
+function setView(viewName) {
+  views.forEach((view) => view.classList.toggle("active", view.id === `view-${viewName}`));
+  navButtons.forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === viewName));
+  crumbTitle.textContent = viewName.charAt(0).toUpperCase() + viewName.slice(1);
+  window.location.hash = viewName;
+}
+
+navButtons.forEach((button) => {
+  button.addEventListener("click", () => setView(button.dataset.viewTarget));
+});
+
+async function fetchJson(url, options) {
+  const response = await fetch(url, options);
+
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return null;
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || "Request failed");
+  }
+
+  return data;
+}
+
+function clientRows(clients) {
+  return clients.map((client) => `
+    <tr>
+      <td><strong>${escapeHtml(client.company_name || "")}</strong></td>
+      <td>${escapeHtml(client.jib || "-")}</td>
+      <td>${escapeHtml(client.pdv || "-")}</td>
+      <td>${escapeHtml(client.email || "-")}</td>
+      <td>${escapeHtml(client.phone || "-")}</td>
+    </tr>
+  `).join("");
+}
+
+function recentRows(clients) {
+  return clients.map((client) => `
+    <tr>
+      <td><strong>${escapeHtml(client.company_name || "")}</strong></td>
+      <td>${escapeHtml(client.email || "-")}</td>
+      <td>${escapeHtml(client.phone || "-")}</td>
+      <td><span class="status-pill">Active</span></td>
+    </tr>
+  `).join("");
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function renderClients(filter = "") {
+  const normalized = filter.trim().toLowerCase();
+  const filtered = state.clients.filter((client) => {
+    return [
+      client.company_name,
+      client.jib,
+      client.pdv,
+      client.email,
+      client.phone,
+      client.address
+    ].some((value) => String(value || "").toLowerCase().includes(normalized));
+  });
+
+  document.getElementById("clients-table").innerHTML = clientRows(filtered);
+  document.getElementById("clients-empty").style.display = filtered.length ? "none" : "block";
+  document.getElementById("client-count").textContent = `${state.clients.length} clients`;
+}
+
+function renderDashboard() {
+  const dashboard = state.dashboard || {};
+  const recentClients = dashboard.recentClients || [];
+
+  document.getElementById("metric-clients").textContent = dashboard.totalClients || 0;
+  document.getElementById("metric-services").textContent = dashboard.totalServices || 0;
+  document.getElementById("metric-invoices").textContent = dashboard.totalInvoices || 0;
+  document.getElementById("mini-clients").textContent = dashboard.totalClients || 0;
+  document.getElementById("mini-revenue").textContent = `${dashboard.totalRevenue || 0} BAM`;
+  document.getElementById("recent-clients-table").innerHTML = recentRows(recentClients);
+  document.getElementById("recent-empty").style.display = recentClients.length ? "none" : "block";
+}
+
+async function loadDashboard() {
+  state.dashboard = await fetchJson("/api/dashboard");
+  renderDashboard();
+}
+
+async function loadClients() {
+  state.clients = await fetchJson("/api/clients");
+  renderClients(document.getElementById("client-search").value);
+}
+
+document.getElementById("client-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const payload = Object.fromEntries(formData.entries());
+
+  try {
+    await fetchJson("/api/clients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    event.currentTarget.reset();
+    await Promise.all([loadClients(), loadDashboard()]);
+    showToast("Client added successfully.");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+document.getElementById("client-search").addEventListener("input", (event) => {
+  renderClients(event.target.value);
+});
+
+document.getElementById("dashboard-client-search").addEventListener("input", (event) => {
+  const value = event.target.value.trim().toLowerCase();
+  const recentClients = (state.dashboard?.recentClients || []).filter((client) => {
+    return [client.company_name, client.email, client.phone]
+      .some((field) => String(field || "").toLowerCase().includes(value));
+  });
+
+  document.getElementById("recent-clients-table").innerHTML = recentRows(recentClients);
+  document.getElementById("recent-empty").style.display = recentClients.length ? "none" : "block";
+});
+
+async function init() {
+  const initialView = window.location.hash.replace("#", "") || "dashboard";
+  setView(["dashboard", "clients", "services", "invoices", "history"].includes(initialView) ? initialView : "dashboard");
+  await Promise.all([loadDashboard(), loadClients()]);
+}
+
+init().catch((error) => showToast(error.message));
+</script>
 </body>
 </html>
