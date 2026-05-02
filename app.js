@@ -154,27 +154,27 @@ body::after {
   pointer-events: none;
 }
 
-.avatar {
-  width: 66px;
-  height: 66px;
+.logo-badge {
+  width: 84px;
+  height: 84px;
   margin: 2px auto 22px;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background:
-    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.78), transparent 18%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04));
+  background: rgba(255, 255, 255, 0.94);
   box-shadow:
     0 18px 38px rgba(0, 0, 0, 0.42),
-    inset 0 0 20px rgba(255, 255, 255, 0.08);
+    0 0 30px rgba(174, 184, 255, 0.16),
+    inset 0 0 0 8px rgba(255, 255, 255, 0.78);
+  overflow: hidden;
 }
 
-.avatar svg {
-  width: 32px;
-  height: 32px;
-  color: rgba(255, 255, 255, 0.88);
-  filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.42));
+.logo-badge img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  display: block;
 }
 
 .form-panel {
@@ -305,11 +305,8 @@ button:hover {
 <body>
   <main class="login-shell">
     <section class="form-panel">
-      <div class="avatar" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Z" fill="currentColor"/>
-          <path d="M4.8 19.3c.9-3.1 3.5-5 7.2-5s6.3 1.9 7.2 5c.2.7-.4 1.4-1.1 1.4H5.9c-.7 0-1.3-.7-1.1-1.4Z" fill="currentColor"/>
-        </svg>
+      <div class="logo-badge" aria-hidden="true">
+        <img src="/277lg.jpg" alt="">
       </div>
       <h2>Welcome Back</h2>
       <p class="subcopy">Please enter your login details for 277 Digital.</p>
