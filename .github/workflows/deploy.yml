@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to server
+      - name: Deploy via HTTPS
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: 77.42.82.177
@@ -18,5 +18,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /var/www/app
+            git remote set-url origin https://277digital:${{ secrets.GIT_TOKEN }}@github.com/277digital/app.git
             git pull origin main
             pm2 restart app.js
