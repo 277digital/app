@@ -57,14 +57,13 @@ function renderLoginPage(errorMessage = "") {
 <title>277 Digital Login</title>
 <style>
 :root {
-  --ink: #172033;
-  --muted: #6c7485;
-  --line: #dde3eb;
-  --paper: #ffffff;
-  --field: #f6f8fb;
-  --brand: #0f766e;
-  --brand-dark: #115e59;
-  --accent: #f59e0b;
+  --text: #f5f7fb;
+  --muted: #8c92a3;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --field: rgba(7, 8, 13, 0.48);
+  --glow: rgba(165, 176, 255, 0.42);
+  --accent: #aeb8ff;
 }
 
 * {
@@ -75,253 +74,257 @@ body {
   min-height: 100vh;
   margin: 0;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: var(--ink);
+  color: var(--text);
   background:
-    linear-gradient(115deg, rgba(15, 118, 110, 0.12), rgba(245, 158, 11, 0.10)),
-    #eef2f6;
+    radial-gradient(circle at 50% 8%, rgba(77, 86, 130, 0.34), transparent 34%),
+    radial-gradient(circle at 50% 52%, rgba(77, 86, 130, 0.16), transparent 42%),
+    #05070b;
   display: grid;
   place-items: center;
   padding: 24px;
-}
-
-.login-shell {
-  width: min(960px, 100%);
-  min-height: 600px;
-  display: grid;
-  grid-template-columns: 0.95fr 1.05fr;
-  background: var(--paper);
-  border: 1px solid rgba(23, 32, 51, 0.08);
-  border-radius: 8px;
-  box-shadow: 0 24px 70px rgba(23, 32, 51, 0.14);
   overflow: hidden;
 }
 
-.brand-panel {
-  padding: 40px;
-  color: #f8fafc;
-  background:
-    linear-gradient(rgba(12, 42, 48, 0.42), rgba(12, 42, 48, 0.78)),
-    url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80") center/cover;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 38px 38px;
+  mask-image: radial-gradient(circle at center, black 0%, transparent 64%);
+  pointer-events: none;
 }
 
-.brand-mark {
-  width: 52px;
-  height: 52px;
-  border: 1px solid rgba(255, 255, 255, 0.36);
+body::after {
+  content: "010110 277 DIGITAL 101001 0110 LOGIN 110010 001101";
+  position: fixed;
+  inset: 0;
   display: grid;
   place-items: center;
-  font-weight: 800;
-  background: rgba(255, 255, 255, 0.12);
+  width: min(620px, 100%);
+  margin: auto;
+  color: rgba(255, 255, 255, 0.045);
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  letter-spacing: 12px;
+  line-height: 1.9;
+  text-align: center;
+  transform: rotate(-2deg);
+  pointer-events: none;
 }
 
-.brand-copy h1 {
-  margin: 0 0 16px;
-  font-size: 42px;
-  line-height: 1;
-  letter-spacing: 0;
+.login-shell {
+  position: relative;
+  z-index: 1;
+  width: min(486px, 100%);
+  padding: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(31, 32, 45, 0.88), rgba(7, 8, 13, 0.9));
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  backdrop-filter: blur(18px);
 }
 
-.brand-copy p {
-  max-width: 360px;
-  margin: 0;
-  color: rgba(248, 250, 252, 0.82);
-  font-size: 16px;
-  line-height: 1.6;
+.login-shell::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 118px;
+  height: 118px;
+  border-bottom-left-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.30), rgba(112, 120, 158, 0.10) 46%, rgba(3, 4, 8, 0.72) 48%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent);
+  box-shadow: -20px 24px 44px rgba(0, 0, 0, 0.38);
 }
 
-.status-strip {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+.login-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 54px rgba(174, 184, 255, 0.08);
+  pointer-events: none;
 }
 
-.status-item {
-  padding: 14px;
+.avatar {
+  width: 66px;
+  height: 66px;
+  margin: 2px auto 22px;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.10);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.78), transparent 18%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04));
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.42),
+    inset 0 0 20px rgba(255, 255, 255, 0.08);
 }
 
-.status-item strong {
-  display: block;
-  font-size: 20px;
-}
-
-.status-item span {
-  color: rgba(248, 250, 252, 0.74);
-  font-size: 12px;
+.avatar svg {
+  width: 32px;
+  height: 32px;
+  color: rgba(255, 255, 255, 0.88);
+  filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.42));
 }
 
 .form-panel {
-  padding: 56px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  color: var(--brand);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
 }
 
 .form-panel h2 {
   margin: 0;
-  font-size: 34px;
+  text-align: center;
+  font-size: 32px;
+  line-height: 1;
   letter-spacing: 0;
 }
 
 .subcopy {
-  margin: 12px 0 30px;
+  margin: 12px 0 28px;
   color: var(--muted);
-  line-height: 1.55;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.divider {
+  height: 1px;
+  margin: 0 0 26px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
 }
 
 .field {
   display: grid;
-  gap: 8px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin-bottom: 22px;
 }
 
 .field label {
-  font-size: 13px;
-  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .field input {
   width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
   background: var(--field);
-  padding: 14px 15px;
-  color: var(--ink);
+  padding: 0 18px;
+  color: var(--text);
   font: inherit;
   outline: none;
   transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
 }
 
-.field input:focus {
-  border-color: var(--brand);
-  background: #fff;
-  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.13);
+.field input::placeholder {
+  color: rgba(255, 255, 255, 0.34);
 }
 
-.submit-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 8px;
+.field input:focus {
+  border-color: rgba(174, 184, 255, 0.64);
+  background: rgba(10, 11, 17, 0.76);
+  box-shadow: 0 0 0 4px rgba(174, 184, 255, 0.10);
 }
 
 button {
-  border: 0;
-  border-radius: 6px;
-  background: var(--brand);
+  width: 100%;
+  height: 52px;
+  margin-top: 4px;
+  border: 1px solid rgba(214, 219, 255, 0.56);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(47, 49, 64, 0.72), rgba(19, 20, 29, 0.86));
   color: #fff;
-  padding: 14px 22px;
   font: inherit;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform 0.18s, background 0.18s, box-shadow 0.18s;
+  box-shadow:
+    0 0 24px rgba(174, 184, 255, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
 }
 
 button:hover {
-  background: var(--brand-dark);
-  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.22);
+  border-color: rgba(239, 242, 255, 0.86);
+  box-shadow:
+    0 0 34px rgba(174, 184, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
   transform: translateY(-1px);
 }
 
-.hint {
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .alert {
-  margin: 0 0 18px;
+  margin: 0 0 20px;
   padding: 12px 14px;
-  border-left: 4px solid var(--accent);
-  background: #fffbeb;
-  color: #7c2d12;
+  border: 1px solid rgba(255, 185, 92, 0.24);
+  border-radius: 8px;
+  background: rgba(99, 55, 15, 0.28);
+  color: #ffd8a8;
   font-size: 14px;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 560px) {
   body {
-    padding: 14px;
+    padding: 16px;
+    overflow: auto;
+  }
+
+  body::after {
+    font-size: 11px;
+    letter-spacing: 7px;
   }
 
   .login-shell {
-    min-height: auto;
-    grid-template-columns: 1fr;
+    width: 100%;
+    padding: 34px 24px 28px;
+    border-radius: 18px;
   }
 
-  .brand-panel {
-    min-height: 260px;
-    padding: 28px;
-  }
-
-  .brand-copy h1 {
-    font-size: 34px;
-  }
-
-  .form-panel {
-    padding: 32px 24px;
+  .login-shell::before {
+    width: 88px;
+    height: 88px;
   }
 
   .form-panel h2 {
     font-size: 28px;
-  }
-
-  .submit-row {
-    align-items: stretch;
-    flex-direction: column;
   }
 }
 </style>
 </head>
 <body>
   <main class="login-shell">
-    <section class="brand-panel" aria-label="277 Digital">
-      <div class="brand-mark">277</div>
-      <div class="brand-copy">
-        <h1>277 Digital</h1>
-        <p>Client work, invoices, and service activity in one focused workspace.</p>
-      </div>
-      <div class="status-strip" aria-label="Workspace status">
-        <div class="status-item">
-          <strong>12</strong>
-          <span>active invoices</span>
-        </div>
-        <div class="status-item">
-          <strong>24/7</strong>
-          <span>server access</span>
-        </div>
-      </div>
-    </section>
-
     <section class="form-panel">
-      <p class="eyebrow">Secure dashboard</p>
-      <h2>Welcome back</h2>
-      <p class="subcopy">Sign in to manage clients, services, and billing activity.</p>
+      <div class="avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Z" fill="currentColor"/>
+          <path d="M4.8 19.3c.9-3.1 3.5-5 7.2-5s6.3 1.9 7.2 5c.2.7-.4 1.4-1.1 1.4H5.9c-.7 0-1.3-.7-1.1-1.4Z" fill="currentColor"/>
+        </svg>
+      </div>
+      <h2>Welcome Back</h2>
+      <p class="subcopy">Please enter your login details for 277 Digital.</p>
       ${errorBlock}
+      <div class="divider"></div>
       <form method="POST" action="/login">
         <div class="field">
           <label for="username">Username</label>
-          <input id="username" name="username" autocomplete="username" placeholder="admin" required>
+          <input id="username" name="username" autocomplete="username" placeholder="Enter your username" required>
         </div>
         <div class="field">
           <label for="password">Password</label>
           <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" required>
         </div>
-        <div class="submit-row">
-          <button type="submit">Sign in</button>
-          <span class="hint">Protected 277 Digital area</span>
-        </div>
+        <button type="submit">Sign in</button>
       </form>
     </section>
   </main>
