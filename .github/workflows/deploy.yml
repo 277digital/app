@@ -1,0 +1,22 @@
+name: Deploy App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 77.42.82.177
+          username: ratko
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /var/www/app
+            git pull origin main
+            pm2 restart app.js
