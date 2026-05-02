@@ -10,21 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Prepare SSH key
-        run: |
-          echo "${{ secrets.SSH_KEY }}" > key.pem
-          chmod 600 key.pem
-
-      - name: Deploy to server
+      - name: Deploy via HTTPS
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: 77.42.82.177
           username: ratko
-          key_path: key.pem
-          port: 22
-          script_stop: true
-          debug: true
+          key: ${{ secrets.SSH_KEY }}
           script: |
             cd /var/www/app
+            git remote set-url origin https://277digital:${{ secrets.GIT_TOKEN }}@github.com/277digital/app.git
             git pull origin main
             pm2 restart app.js
