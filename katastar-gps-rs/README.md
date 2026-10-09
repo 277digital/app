@@ -31,3 +31,9 @@ GPS u telefonu je ±3–10 m. Za centimetre treba RTK prijemnik; neki RTK prijem
 Aplikacija **ne preuzima** podatke sa `ekatastar.rgurs.org`: taj servis je zaštićen reCAPTCHA-om i vraća lične podatke, pa treba službeni pristup (RGURS). Dok se to ne riješi, parcele se unose uvozom GeoJSON-a ili snimanjem. Uvoz je u `js/app.js`, a pretraga u `js/geo.js`, pa se kasnije može dodati provajder za službeni API.
 
 Podaci o vlasnicima se u aplikaciji ne koriste i ne treba ih unositi.
+
+## Android aplikacija (ugrađeni browser)
+`android/` sadrži malu Android aplikaciju (WebView) koja otvara ekatastar i sama ubacuje GPS skript. Gotov APK: `android/katastar-gps-rs.apk`.
+- Instalacija: preuzmi APK na telefon, dozvoli „Instaliraj nepoznate aplikacije“ za browser/Fajlove, otvori APK.
+- Gradnja: `android/build.sh` (bez Gradle-a; paketi su navedeni u skripti). `debug.keystore` je standardni debug ključ, ne tajna.
+- Test na uređaju još nije obavljen u ovom okruženju (nema emulatora).
