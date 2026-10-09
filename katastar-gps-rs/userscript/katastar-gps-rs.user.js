@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      1.3.1
+// @version      1.3.2
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -245,6 +245,14 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .s0:empty{display:none}
 #kgrs .st.off .s0{display:none}
 #kgrsmap,#kgrsmap .ol-viewport,#kgrsmap .ol-viewport canvas{touch-action:none!important}
+#kgrs-load{position:fixed;inset:0;z-index:2147483100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(circle at 50% 42%,#1a2112 0%,#0c0d10 62%);opacity:1;transition:opacity .5s ease;font-family:system-ui,-apple-system,Roboto,sans-serif}
+#kgrs-load.off{opacity:0;pointer-events:none}
+#kgrs-load svg{width:54px;height:54px;animation:klpulse 1.8s ease-in-out infinite}
+@keyframes klpulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.08);opacity:1}}
+#kgrs-load .lb{width:132px;height:3px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.09)}
+#kgrs-load .lb i{display:block;width:45%;height:100%;border-radius:3px;background:linear-gradient(90deg,transparent,#d9f244,transparent);animation:klbar 1.25s ease-in-out infinite}
+@keyframes klbar{0%{transform:translateX(-110%)}100%{transform:translateX(250%)}}
+#kgrs-load small{font-size:12px;letter-spacing:.06em;color:#9aa0ac}
 #kgrs-toast{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483200;padding:12px 14px;border-radius:16px;background:rgba(20,21,26,.94);color:#f2f3f5;font:13px/1.4 system-ui,-apple-system,Roboto,sans-serif;border:1px solid rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.5);display:none}
 #kgrs-toast.on{display:block}
 #kgrs-toast b{color:#d9f244}
@@ -272,32 +280,33 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .chip-btn.acc{background:#d9f244;color:#141507}
 #kgrs .owners-toggle{padding:8px 2px;font-size:13px;font-weight:600;border-top:1px solid rgba(255,255,255,.07)}
 /* ---- dugme Kreni / Stop ---- */
-#kgrs .go{position:absolute;right:12px;top:34px;width:80px;height:80px;border-radius:50%;border:1px solid rgba(255,255,255,.1);
-  background:radial-gradient(circle at 50% 22%,#454853 0%,#22232a 55%,#131418 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -12px 20px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.55);
-  display:grid;place-items:center;align-content:center;gap:5px;padding:0;font-weight:700;font-size:14px;letter-spacing:.03em;color:#f2f3f5;
-  transition:background .35s,box-shadow .35s,transform .12s}
+#kgrs .go{position:absolute;right:12px;top:38px;width:96px;height:66px;border-radius:14px;border:1px solid rgba(217,242,68,.38);overflow:hidden;
+  background:linear-gradient(160deg,#30323b 0%,#1b1c22 62%,#141519 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -10px 18px rgba(0,0,0,.35),0 8px 20px rgba(0,0,0,.5);
+  display:grid;place-items:center;align-content:center;gap:5px;padding:0;font-weight:800;font-size:14px;letter-spacing:.04em;color:#f2f3f5;
+  transition:background .4s,border-color .4s,box-shadow .4s,transform .12s}
 #kgrs .go:active{transform:scale(.95)}
-#kgrs .go:before{content:'';position:absolute;inset:-5px;border-radius:50%;pointer-events:none;
-  background:conic-gradient(from 200deg,rgba(217,242,68,0) 0%,rgba(217,242,68,.95) 30%,rgba(217,242,68,0) 62%);
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));
-  animation:kspin 6s linear infinite}
-#kgrs .go:after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid transparent;pointer-events:none}
+#kgrs .go:before{content:'';position:absolute;top:-10%;bottom:-10%;left:-70%;width:55%;pointer-events:none;transform:skewX(-20deg);
+  background:linear-gradient(90deg,transparent,rgba(217,242,68,.28),transparent);animation:ksweep 3.4s ease-in-out infinite}
+#kgrs .go:after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid transparent;pointer-events:none}
 #kgrs .go i{display:block;width:0;height:0;border-style:solid;border-width:7px 0 7px 12px;border-color:transparent transparent transparent #d9f244;margin-left:3px;border-radius:2px;filter:drop-shadow(0 0 6px rgba(217,242,68,.55));transition:all .25s}
 /* traži signal */
-#kgrs .go.wait:before{background:conic-gradient(from 0deg,rgba(255,184,77,0) 0%,rgba(255,184,77,1) 45%,rgba(255,184,77,0) 75%);animation:kspin 1.1s linear infinite}
+#kgrs .go.wait{border-color:rgba(255,184,77,.55)}
+#kgrs .go.wait:before{background:linear-gradient(90deg,transparent,rgba(255,184,77,.35),transparent);animation:ksweep 1.3s ease-in-out infinite}
 #kgrs .go.wait i{width:14px;height:14px;margin:0;border:2px solid rgba(255,184,77,.3);border-top-color:#ffb84d;border-radius:50%;filter:none;animation:kspin .9s linear infinite}
 /* radi */
-#kgrs .go.run{background:radial-gradient(circle at 50% 22%,#3fc57c 0%,#1a7a45 52%,#0d3f24 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -12px 20px rgba(0,0,0,.35),0 0 20px 2px rgba(52,210,122,.4),0 8px 20px rgba(0,0,0,.5);animation:kglow 2.2s ease-in-out infinite}
-#kgrs .go.run:before{background:conic-gradient(from 0deg,#34d27a,#a6ffcb,#34d27a 50%,#a6ffcb,#34d27a);animation:kspin 5s linear infinite}
-#kgrs .go.run:after{border-color:rgba(52,210,122,.7);animation:krip 2s ease-out infinite}
+#kgrs .go.run{border-color:rgba(130,255,181,.55);background:linear-gradient(160deg,#35b872 0%,#1a7a45 55%,#0d3f24 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -10px 18px rgba(0,0,0,.3),0 0 18px 2px rgba(52,210,122,.4),0 8px 20px rgba(0,0,0,.5);animation:kglow 2.4s ease-in-out infinite}
+#kgrs .go.run:before{background:linear-gradient(90deg,transparent,rgba(255,255,255,.34),transparent);animation:ksweep 2.4s ease-in-out infinite}
+#kgrs .go.run:after{border-color:rgba(166,255,203,.8);animation:kbord 2.4s ease-in-out infinite}
 #kgrs .go.run i{width:12px;height:12px;margin:0;border:0;border-radius:3px;background:#fff;filter:drop-shadow(0 0 5px rgba(255,255,255,.5));animation:kbeat 1.6s ease-in-out infinite}
+@keyframes ksweep{0%{left:-70%}55%,100%{left:130%}}
+@keyframes kbord{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes kspin{to{transform:rotate(360deg)}}
 @keyframes krip{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.2);opacity:0}}
 @keyframes kbeat{0%,100%{transform:scale(1)}50%{transform:scale(.82)}}
 @keyframes kglow{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -12px 20px rgba(0,0,0,.35),0 0 14px 1px rgba(52,210,122,.3),0 8px 20px rgba(0,0,0,.5)}50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -12px 20px rgba(0,0,0,.35),0 0 28px 6px rgba(52,210,122,.55),0 8px 20px rgba(0,0,0,.5)}}
-@media (max-width:350px){#kgrs .t1{font-size:18px}#kgrs .go{width:68px;height:68px;font-size:13px;top:38px}#kgrs .go i{border-width:6px 0 6px 10px}#kgrs .row1,#kgrs .row2{padding-right:86px}#kgrs .pill{font-size:11px;padding:0 9px}}
+@media (max-width:350px){#kgrs .t1{font-size:18px}#kgrs .go{width:84px;height:60px;font-size:13px;top:40px}#kgrs .go i{border-width:6px 0 6px 10px}#kgrs .row1,#kgrs .row2{padding-right:86px}#kgrs .pill{font-size:11px;padding:0 9px}}
 @media (max-height:700px) and (orientation:portrait){#kgrs .sheet{max-height:50vh}}
 @media (orientation:landscape) and (max-height:520px){#kgrs .sheet{left:auto;width:min(460px,58vw);max-height:calc(100vh - 78px - env(safe-area-inset-bottom))}#kgrs .hint{left:auto;width:min(460px,58vw)}#kgrs .rail{right:auto;left:10px;top:calc(56px + env(safe-area-inset-top))}#kgrs .layers{right:auto;left:58px;top:calc(56px + env(safe-area-inset-top))}}
 #kgrs .none{color:#9aa0ac;font-size:13px;padding:6px 2px}
@@ -952,7 +961,20 @@ body .kgrs-force-hide{display:none!important}
   /* Mapu NE prepravljamo u njihovom modalu: prebacimo je (map.setTarget) u sopstveni fullscreen sloj,
      a pri zatvaranju je vratimo i njihov modal zatvori njihov kod. Tako nema ostataka ni zatamnjenja. */
   let mounted = null;
+  /** Uvodni ekran dok se mapa ucitava: logo, tanka traka i tekst; nestaje kad su plocice nacrtane. */
+  function showLoader(map, direct) {
+    const old = document.getElementById('kgrs-load'); if (old) old.remove();
+    const el = document.createElement('div'); el.id = 'kgrs-load';
+    el.innerHTML = SVG_LOGO + '<div class="lb"><i></i></div><small>' + (direct ? 'Učitavam mapu i lociram vas…' : 'Učitavam mapu…') + '</small>';
+    document.body.appendChild(el);
+    const t0 = Date.now(); let done = false;
+    const hide = () => { if (done) return; done = true; const w = Math.max(0, 900 - (Date.now() - t0)); setTimeout(() => { el.classList.add('off'); setTimeout(() => el.remove(), 600); }, w); };
+    try { setTimeout(() => { if (map.once) map.once('rendercomplete', hide); }, 700); } catch (e) { /* ok */ }
+    setTimeout(hide, 5000);
+    return el;
+  }
   function mountMap(map, t, direct) {
+    showLoader(map, direct);
     const c = document.createElement('div'); c.id = 'kgrsmap'; document.body.appendChild(c);
     mounted = { c, orig: map.getTarget(), t, direct: !!direct };
     map.setTarget(c);
@@ -1009,7 +1031,7 @@ body .kgrs-force-hide{display:none!important}
       try { const ia = map.getInteractions(); if (mounted.dpNew) ia.remove(mounted.dpNew); (mounted.dp || []).forEach((i) => ia.push(i)); } catch (e) { /* ok */ }
       map.setTarget(mounted.orig); map.updateSize();
     }
-    myRings = null; myDetail = null; myQ.t = 0; myQ.at = null;
+    myRings = null; myDetail = null; myQ.t = 0; myQ.at = null; const ld = document.getElementById('kgrs-load'); if (ld) ld.remove();
     mounted.c.remove(); mounted = null; mapRequested = 0; const mbt = document.getElementById('kgrs-mapbtn'); if (mbt) mbt.style.display = '';
     refs.root.classList.remove('on');
   }
@@ -1260,22 +1282,39 @@ body .kgrs-force-hide{display:none!important}
   /* ---- tok "Vlasnici": popunimo njihovu pretragu, korisnik potvrdi „Нисам робот“, mi pritisnemo Претражи i otvorimo parcelu ---- */
   let pendingSearch = null;
   const setField = (el, val) => { el.value = val; ['input', 'change'].forEach((t) => el.dispatchEvent(new Event(t, { bubbles: true }))); };
-  function setDropdown(id, value) {
+  /** Bira vrijednost u njihovoj Semantic padajucoj listi i PROVJERAVA da se prikazani tekst zaista promijenio (vise nacina, od najvjernijeg). */
+  async function setDropdown(id, value) {
     const sel = document.getElementById(id); if (!sel) return false;
-    const dd = sel.closest('.ui.dropdown'), $ = window.jQuery;
-    try { if ($ && dd && $.fn && $.fn.dropdown) { $(dd).dropdown('set selected', value); return true; } } catch (e) { /* rezerva ispod */ }
-    sel.value = value; sel.dispatchEvent(new Event('change', { bubbles: true })); return true;
+    const dd = sel.closest('.ui.dropdown'), $ = window.jQuery, v = String(value), wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const shown = () => { const t = dd && [...dd.children].find((c) => c.classList && c.classList.contains('text')); return t && !t.classList.contains('default') && t.textContent.trim() ? t.textContent.trim() : ''; };
+    const ok = () => sel.value === v && (!dd || !!shown());
+    const opt = [...sel.options].find((o) => o.value === v);
+    if ($ && dd && $.fn && $.fn.dropdown) {
+      try { $(dd).dropdown('refresh'); } catch (e) { /* ok */ }
+      try { $(dd).dropdown('set selected', v); } catch (e) { /* ok */ }
+      await wait(60); if (ok()) return true;
+    }
+    if (dd) {                                                                                  // klik na stavku liste, kao pravi korisnik
+      const it = [...dd.querySelectorAll('.menu .item')].find((e) => e.getAttribute('data-value') === v);
+      if (it) { it.click(); await wait(80); if (ok()) return true; }
+    }
+    sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); await wait(60);
+    if (dd && opt && !shown()) {                                                               // lista nema stavku: ispisemo izabrani tekst sami
+      const t = [...dd.children].find((c) => c.classList && c.classList.contains('text'));
+      if (t) { t.classList.remove('default'); t.textContent = opt.text.trim(); }
+    }
+    return sel.value === v;
   }
   async function prefillSearch(info) {
     const tab = document.querySelector('.ui.pointing.menu .item[data-tab="first"]'); if (tab && !tab.classList.contains('active')) tab.click();
     const notes = [], inp = document.getElementById('i_parc');
     if (inp && info.number) { setField(inp, info.number); notes.push('parcela ' + info.number); }                       // prvo broj (odmah)
-    if (info.lokacija && setDropdown('ddlPP', info.lokacija)) notes.push('opština');
+    if (info.lokacija && await setDropdown('ddlPP', info.lokacija)) notes.push('opština');
     if (info.koName || info.koCode) {
       const want = latToCyr(info.koName || '').toLowerCase(), code = String(info.koCode || ''); let ok = false;
       for (let i = 0; i < 28 && !ok; i++) {                                                                  // lista KO se ucitava nakon izbora opstine
         const sel = document.getElementById('ddlKO'), opt = sel && [...sel.options].find((o) => (want && (o.value.toLowerCase() === want || o.text.trim().toLowerCase() === want)) || (code && (o.value === code || new RegExp('(^|\\D)' + code + '(\\D|$)').test(o.text))));
-        if (opt) { setDropdown('ddlKO', opt.value); ok = true; } else await new Promise((r) => setTimeout(r, 250));
+        if (opt) { ok = await setDropdown('ddlKO', opt.value); } else await new Promise((r) => setTimeout(r, 250));
       }
       notes.push(ok ? 'katastarska opština' : '<b>katastarsku opštinu izaberite sami</b> (' + (info.koName || info.koCode) + ')');
     }
@@ -1287,7 +1326,9 @@ body .kgrs-force-hide{display:none!important}
     setTimeout(async () => {
       const da = document.getElementById('d_all'); if (da) da.scrollTo(0, 0);
       const notes = await prefillSearch(info);
-      toast('Popunjeno: ' + (notes.join(', ') || 'ništa') + '. Provjerite i potvrdite <b>„Нисам робот“</b>, a pretraga i otvaranje parcele sa vlasnicima idu sami.' + (info.number ? '' : ' <b>Upišite broj parcele</b> (kao na mapi).'), 14000);
+      const inp = document.getElementById('i_parc'); if (inp && !inp.value.trim()) { try { inp.focus(); } catch (e) { /* ok */ } }
+      const nums = info.number ? '' : ' <small style="opacity:.7">(sa sajta: ' + ((info.all || []).filter(([k, v]) => /\d/.test(v) && String(v).length < 20).slice(0, 8).map(([k, v]) => k + '=' + v).join(', ') || 'nema brojeva') + ')</small>';
+      toast('Popunjeno: ' + (notes.join(', ') || 'ništa') + '. Provjerite i potvrdite <b>„Нисам робот“</b>, a pretraga i otvaranje parcele sa vlasnicima idu sami.' + (info.number ? '' : ' <b>Upišite broj parcele</b>.' + nums), 14000);
     }, 1000);
   }
   function searchFlowTick() {
@@ -1296,7 +1337,7 @@ body .kgrs-force-hide{display:none!important}
     const btn = document.getElementById('btnKC'), inp = document.getElementById('i_parc'), box = document.getElementById('d_info');
     if (!ps.clicked) {
       // njihov kod ukljuci dugme tek kad je captcha rijesena; tada ga mi pritisnemo
-      if (btn && !btn.classList.contains('disabled') && !btn.disabled && inp && inp.value.trim()) { ps.sig = box ? box.innerText : ''; ps.clicked = true; ps.tc = Date.now(); btn.click(); }
+      if (btn && !btn.classList.contains('disabled') && !btn.disabled && inp && inp.value.trim()) { ps.num = inp.value.trim(); ps.sig = box ? box.innerText : ''; ps.clicked = true; ps.tc = Date.now(); btn.click(); }
       return;
     }
     const rows = [...document.querySelectorAll('#d_info table[id^=parc_] tbody tr')].filter((tr) => tr.querySelector('button[onclick*="jumpTo"]') && !tr.classList.contains('kgrs-dup'));
