@@ -11,6 +11,13 @@ Mobilna web aplikacija (PWA) za hodanje po placu uz GPS: prikaz parcela na satel
 - Instalacija na početni ekran, radi i bez mreže (osim mapnih pločica).
 - Opcioni WMS sloj: unosi se URL/ključ koji korisnik sam ima pravo da koristi.
 
+## Izgled i funkcije (v0.2)
+- Tamna tema za cijeli ekatastar (pretraga, rezultati) prilagođena telefonu, bez horizontalnog skrola; veliko dugme „Прикажи на мапи“.
+- Mapa preko cijelog ekrana: gore status GPS-a, dolje panel sa parcelom (broj, KO, površina, list, način korišćenja), vlasnicima i velikim dugmetom Kreni/Stop.
+- Filter pozicije (Kalman, uz težinu po tačnosti) i **kalibracija**: stanite na poznatu tačku, dodirnite je na mapi (blizu ćoška parcele se poravna na ćošak); pomak se primjenjuje na sve naredne pozicije.
+- UNUTAR/IZVAN parcele i rastojanje do međe, ako sajt drži označenu parcelu kao vektorski sloj.
+- Podaci o vlasnicima se samo prikazuju iz rezultata pretrage; ne čuvaju se i ne šalju nigdje.
+
 ## Glavni tok: GPS direktno na ekatastar mapi
 `userscript/katastar-gps-rs.user.js` dodaje dugme ◎ na mapu sajta `ekatastar.rgurs.org`. Parcelu nađeš na njihovom sajtu (captchu rješavaš ti), klikneš „Прикажи на мапи“, pa uključiš GPS i hodaš: na njihovoj mapi se crta tvoja tačka sa krugom tačnosti i koordinate u EPSG:31276.
 - Brzi test: zalijepi cijeli fajl u konzolu (F12) na otvorenoj mapi.

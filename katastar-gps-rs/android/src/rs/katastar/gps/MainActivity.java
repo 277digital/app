@@ -4,12 +4,16 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -29,10 +33,18 @@ public class MainActivity extends Activity {
     private static final String HOME = "https://ekatastar.rgurs.org/";
     private static final int REQ_LOCATION = 1;
 
+    private final Handler ui = new Handler();
     private WebView web;
     private String script = "";
     private String pendingOrigin;
     private GeolocationPermissions.Callback pendingCallback;
+
+    private final Runnable show = new Runnable() {
+        @Override
+        public void run() {
+            if (web != null) web.setAlpha(1f);
+        }
+    };
 
     private boolean hasLocation() {
         return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -65,7 +77,10 @@ public class MainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         script = readAsset("katastar-gps-rs.user.js");
 
+        getWindow().setStatusBarColor(Color.parseColor("#101114"));
+        getWindow().setNavigationBarColor(Color.parseColor("#101114"));
         web = new WebView(this);
+        web.setBackgroundColor(Color.parseColor("#101114"));
         web.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(web);
 
@@ -75,7 +90,9 @@ public class MainActivity extends Activity {
         s.setGeolocationEnabled(true);
         s.setBuiltInZoomControls(true);
         s.setDisplayZoomControls(false);
-        s.setLoadWithOverviewMode(true);
+        // Raspored uvijek na sirinu uredjaja (bez horizontalnog skrola, ignorise viewport sajta)
+        s.setUseWideViewPort(false);
+        s.setLoadWithOverviewMode(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
@@ -95,8 +112,16 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                // sakrij stranicu dok se ne primijeni tema (bez bijelog bljeska); sigurnosni povratak nakon 3 s
+                view.setAlpha(0f);
+                ui.postDelayed(show, 3000);
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 inject(view, url);
+                ui.postDelayed(show, 250);
             }
 
             @Override
@@ -168,8 +193,17 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (web.canGoBack()) web.goBack();
-        else super.onBackPressed();
+        // ako je mapa otvorena, "nazad" je zatvara; inace ide nazad po stranicama
+        web.evaluateJavascript("(function(){var r=document.getElementById('kgrs');"
+                + "if(r&&r.classList.contains('on')){r.querySelector('.top .rb').click();return 1}return 0})()",
+                new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String v) {
+                        if ("1".equals(v)) return;
+                        if (web.canGoBack()) web.goBack();
+                        else finish();
+                    }
+                });
     }
 
     @Override
