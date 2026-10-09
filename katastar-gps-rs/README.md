@@ -18,6 +18,12 @@ Mobilna web aplikacija (PWA) za hodanje po placu uz GPS: prikaz parcela na satel
 - UNUTAR/IZVAN parcele i rastojanje do međe, ako sajt drži označenu parcelu kao vektorski sloj.
 - Podaci o vlasnicima se samo prikazuju iz rezultata pretrage; ne čuvaju se i ne šalju nigdje.
 
+## Detalji, pravac i zaštita skrola (v0.8)
+- **Detalji parcele:** dodir na mapu (ili dugme „Detalji ovdje“ kad stojite na drugoj parceli) šalje GetFeatureInfo njihovom WMS sloju parcela (svi formati odjednom) i prikazuje što sajt vrati (broj, površina, KO…). Vlasnici su samo u njihovoj pretrazi: dugme „Pretraži parcelu …“ upisuje broj u njihovo polje.
+- **Strelica pravca** na GPS tački: kompas (senzor orijentacije) dok stojite, smjer kretanja dok hodate.
+- **Doktor skrola:** ako prevlačenje prstom ne skrola stranicu, skripta traži uzrok (`touch-action`, providni sloj, `overflow`), popravlja ga i ispisuje šta je našla.
+- Dugme Kreni/Stop: staklasti disk sa kružnim lukom, ▶ / spinner / ■ i zeleni puls.
+
 ## Preciznost (v0.3)
 - Filter pozicije prilagođen brzini (mirovanje = jače glađenje, hodanje = brza reakcija) i odbacivanje naglih skokova.
 - Kalibracija sa više tačaka (težinski prosjek), upozorenje ako se tačke ne slažu, ističe nakon 12 h.

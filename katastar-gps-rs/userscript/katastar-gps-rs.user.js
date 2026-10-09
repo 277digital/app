@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.7.1
+// @version      0.8.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -22,7 +22,7 @@ html{color-scheme:dark}
 html{background:var(--bg)!important;height:100%!important;overflow:hidden!important}
 body{background:var(--bg)!important;color:var(--fg)!important;overflow:hidden!important;height:100%!important;max-width:100vw!important;margin:0!important;padding:0!important;border:0!important;position:relative!important}
 body,#d_all,.ui,.ui.form,.ui.input input,.ui.dropdown{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif!important}
-#d_all{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;border:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;background:var(--bg)!important;box-sizing:border-box!important}
+#d_all{touch-action:pan-y pinch-zoom;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;border:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;background:var(--bg)!important;box-sizing:border-box!important}
 *{-webkit-tap-highlight-color:transparent}
 #wrapper,#content_m,.maincol,.items-row,.item,.ui.container{border:0!important;outline:0!important;box-shadow:none!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:0!important;float:none!important;box-sizing:border-box!important;background:transparent!important}
 .items-row{padding:0 16px!important}
@@ -173,18 +173,6 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .st.off .s1,#kgrs .st.off .s2{display:none}
 #kgrs .st.off .actions{margin-top:0}
 #kgrs .st.ok .s1{color:#58e08a}#kgrs .st.bad .s1{color:#ff6b5e}#kgrs .st.warn .s1{color:#ffb84d}
-#kgrs .go{position:absolute;right:14px;top:50px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#34363f,#1a1b20 70%);box-shadow:0 0 0 5px #121317,0 0 0 7px #2e3039,0 10px 28px rgba(0,0,0,.6);display:grid;place-items:center;align-content:center;gap:8px;font-weight:800;font-size:19px;color:#f2f3f5;transition:box-shadow .25s,background .25s}
-#kgrs .go i{display:block;width:16px;height:16px;border-radius:50%;border:2px solid #9aa0ac;transition:all .25s}
-#kgrs .go:after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid transparent;pointer-events:none}
-#kgrs .go.wait i{border-color:#ffb84d;animation:kp 1s infinite}
-#kgrs .go.wait:after{border-color:rgba(255,184,77,.65);animation:krip 1.4s ease-out infinite}
-#kgrs .go.run{background:radial-gradient(circle at 50% 35%,#238a4c,#0f3a20 72%);box-shadow:0 0 0 5px #0d1a12,0 0 0 8px #34d27a,0 0 26px 4px rgba(52,210,122,.4),0 10px 28px rgba(0,0,0,.6);animation:kglow 2s ease-in-out infinite}
-#kgrs .go.run i{border-color:#fff;background:#fff;width:14px;height:14px;animation:kbeat 1.4s ease-in-out infinite}
-#kgrs .go.run:after{border-color:rgba(52,210,122,.75);animation:krip 1.8s ease-out infinite}
-@keyframes kp{50%{opacity:.25}}
-@keyframes krip{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.13);opacity:0}}
-@keyframes kbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
-@keyframes kglow{0%,100%{box-shadow:0 0 0 3px #0d1a12,0 0 0 5px #34d27a,0 0 14px 1px rgba(52,210,122,.28),0 6px 16px rgba(0,0,0,.5)}50%{box-shadow:0 0 0 3px #0d1a12,0 0 0 5px #34d27a,0 0 24px 5px rgba(52,210,122,.5),0 6px 16px rgba(0,0,0,.5)}}
 #kgrs .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 #kgrs .chip-btn{background:#23252d;border-radius:12px;padding:10px 14px;font-weight:700;font-size:13px;display:inline-flex;gap:6px;align-items:center}
 #kgrs .chip-btn.acc{background:#d9f244;color:#141507}
@@ -196,6 +184,18 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs ul.owners.open{display:block}
 #kgrs ul.owners li{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;font-size:14px;border-top:1px solid rgba(255,255,255,.06)}
 #kgrs ul.owners li b{color:#d9f244;white-space:nowrap}
+#kgrs .detail{position:absolute;left:10px;right:10px;bottom:calc(190px + env(safe-area-inset-bottom));max-height:42vh;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:20px;padding:10px 14px 12px;display:none;pointer-events:auto}
+#kgrs .detail.on{display:block}
+#kgrs .dhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+#kgrs .dhead h3{margin:0;font-size:16px;font-weight:700}
+#kgrs .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07);font-size:13px;color:#9aa0ac}
+#kgrs .kv b{color:#f2f3f5;text-align:right;overflow-wrap:anywhere;font-weight:600}
+#kgrs .detail .chip-btn.acc{margin-top:8px;width:100%;justify-content:center}
+#kgrs-toast{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483200;padding:12px 14px;border-radius:16px;background:rgba(20,21,26,.94);color:#f2f3f5;font:13px/1.4 system-ui,-apple-system,Roboto,sans-serif;border:1px solid rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.5);display:none}
+#kgrs-toast.on{display:block}
+#kgrs-toast b{color:#d9f244}
+#kgrs-toast button{margin-top:8px;font:inherit;font-weight:700;padding:8px 12px;border-radius:10px;border:0;background:#d9f244;color:#141507}
+.kgrs-ta-fix{touch-action:pan-y!important}
 /* v0.6: kompaktan, suptilan panel */
 #kgrs .glass{background:rgba(20,21,26,.82);box-shadow:0 4px 18px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07)}
 #kgrs .sheet{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));border-radius:22px;padding:2px 14px 6px;max-height:46vh}
@@ -217,12 +217,33 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .chip-btn{padding:7px 11px;font-size:12px;border-radius:10px;background:rgba(255,255,255,.07);font-weight:600}
 #kgrs .chip-btn.acc{background:#d9f244;color:#141507}
 #kgrs .owners-toggle{padding:8px 2px;font-size:13px;font-weight:600;border-top:1px solid rgba(255,255,255,.07)}
-#kgrs .go{width:76px;height:76px;top:36px;right:12px;font-size:15px;gap:5px;box-shadow:0 0 0 3px #121317,0 0 0 4.5px #2e3039,0 6px 16px rgba(0,0,0,.5)}
-#kgrs .go i{width:12px;height:12px}
-#kgrs .go.run{box-shadow:0 0 0 3px #0d1a12,0 0 0 5px #34d27a,0 0 18px 2px rgba(52,210,122,.35),0 6px 16px rgba(0,0,0,.5)}
-#kgrs .go.run i{width:11px;height:11px}
-#kgrs .go:after{inset:-5px}
-@media (max-width:350px){#kgrs .t1{font-size:18px}#kgrs .go{width:68px;height:68px;font-size:14px;top:38px}#kgrs .row1,#kgrs .row2{padding-right:86px}#kgrs .pill{font-size:11px;padding:0 9px}}
+/* ---- dugme Kreni / Stop ---- */
+#kgrs .go{position:absolute;right:12px;top:34px;width:80px;height:80px;border-radius:50%;border:1px solid rgba(255,255,255,.1);
+  background:radial-gradient(circle at 50% 22%,#454853 0%,#22232a 55%,#131418 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -12px 20px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.55);
+  display:grid;place-items:center;align-content:center;gap:5px;padding:0;font-weight:700;font-size:14px;letter-spacing:.03em;color:#f2f3f5;
+  transition:background .35s,box-shadow .35s,transform .12s}
+#kgrs .go:active{transform:scale(.95)}
+#kgrs .go:before{content:'';position:absolute;inset:-5px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 200deg,rgba(217,242,68,0) 0%,rgba(217,242,68,.95) 30%,rgba(217,242,68,0) 62%);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));
+  animation:kspin 6s linear infinite}
+#kgrs .go:after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid transparent;pointer-events:none}
+#kgrs .go i{display:block;width:0;height:0;border-style:solid;border-width:7px 0 7px 12px;border-color:transparent transparent transparent #d9f244;margin-left:3px;border-radius:2px;filter:drop-shadow(0 0 6px rgba(217,242,68,.55));transition:all .25s}
+/* traži signal */
+#kgrs .go.wait:before{background:conic-gradient(from 0deg,rgba(255,184,77,0) 0%,rgba(255,184,77,1) 45%,rgba(255,184,77,0) 75%);animation:kspin 1.1s linear infinite}
+#kgrs .go.wait i{width:14px;height:14px;margin:0;border:2px solid rgba(255,184,77,.3);border-top-color:#ffb84d;border-radius:50%;filter:none;animation:kspin .9s linear infinite}
+/* radi */
+#kgrs .go.run{background:radial-gradient(circle at 50% 22%,#3fc57c 0%,#1a7a45 52%,#0d3f24 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -12px 20px rgba(0,0,0,.35),0 0 20px 2px rgba(52,210,122,.4),0 8px 20px rgba(0,0,0,.5);animation:kglow 2.2s ease-in-out infinite}
+#kgrs .go.run:before{background:conic-gradient(from 0deg,#34d27a,#a6ffcb,#34d27a 50%,#a6ffcb,#34d27a);animation:kspin 5s linear infinite}
+#kgrs .go.run:after{border-color:rgba(52,210,122,.7);animation:krip 2s ease-out infinite}
+#kgrs .go.run i{width:12px;height:12px;margin:0;border:0;border-radius:3px;background:#fff;filter:drop-shadow(0 0 5px rgba(255,255,255,.5));animation:kbeat 1.6s ease-in-out infinite}
+@keyframes kspin{to{transform:rotate(360deg)}}
+@keyframes krip{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.2);opacity:0}}
+@keyframes kbeat{0%,100%{transform:scale(1)}50%{transform:scale(.82)}}
+@keyframes kglow{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -12px 20px rgba(0,0,0,.35),0 0 14px 1px rgba(52,210,122,.3),0 8px 20px rgba(0,0,0,.5)}50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -12px 20px rgba(0,0,0,.35),0 0 28px 6px rgba(52,210,122,.55),0 8px 20px rgba(0,0,0,.5)}}
+@media (max-width:350px){#kgrs .t1{font-size:18px}#kgrs .go{width:68px;height:68px;font-size:13px;top:38px}#kgrs .go i{border-width:6px 0 6px 10px}#kgrs .row1,#kgrs .row2{padding-right:86px}#kgrs .pill{font-size:11px;padding:0 9px}}
 @media (max-height:700px) and (orientation:portrait){#kgrs .sheet{max-height:50vh}}
 @media (orientation:landscape) and (max-height:520px){#kgrs .sheet{left:auto;width:min(460px,58vw);max-height:calc(100vh - 78px - env(safe-area-inset-bottom))}#kgrs .hint{left:auto;width:min(460px,58vw)}#kgrs .rail{right:auto;left:10px;top:calc(56px + env(safe-area-inset-top))}#kgrs .layers{right:auto;left:58px;top:calc(56px + env(safe-area-inset-top))}}
 #kgrs .none{color:#9aa0ac;font-size:13px;padding:6px 2px}
@@ -245,7 +266,7 @@ body .kgrs-force-hide{display:none!important}
 #kgrs .lrow.radio.on .rd{border-color:#d9f244}
 #kgrs .lrow.radio.on .rd:after{content:'';position:absolute;inset:3px;border-radius:50%;background:#d9f244}
 #kgrs .credit{margin:6px 8px 2px;font-size:10px;color:#6f737e;line-height:1.3}
-@media (orientation:landscape) and (max-height:520px){#kgrs .layers{right:auto;left:58px;max-width:280px}}
+@media (orientation:landscape) and (max-height:520px){#kgrs .layers{right:auto;left:58px;max-width:280px}#kgrs .detail{left:58px;right:auto;width:min(340px,40vw);bottom:10px!important}}
 `;
 
   const addStyle = (id, css) => {
@@ -485,6 +506,7 @@ body .kgrs-force-hide{display:none!important}
   const CAL_KEY = 'kgrs.cal.v1';
   let watchId = null, wakeLock = null, follow = true, calMode = false;
   let gpsSource = null, gpsLayer = null;
+  let heading = null, compassH = null, moveH = null, moveT = 0, trail = [], tapCoord = null, tapFeat = null, dirFeat = null, lastOri = 0;
   let raw = null;        // filtrirana pozicija bez kalibracije {x,y,acc,t}
   let cal = null;        // {dx,dy,t}
   try { cal = JSON.parse(localStorage.getItem(CAL_KEY)); } catch (e) { cal = null; }
@@ -515,6 +537,8 @@ body .kgrs-force-hide{display:none!important}
   }
   const calibrated = () => (cal ? [raw.x + cal.dx, raw.y + cal.dy] : [raw.x, raw.y]);
 
+  // konus + strelica koja pokazuje u kom smjeru je korisnik okrenut (rotira se po kursu)
+  const DIR_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><defs><radialGradient id="g" cx="60" cy="60" r="58" gradientUnits="userSpaceOnUse"><stop offset="0.15" stop-color="#19b5ff" stop-opacity="0.8"/><stop offset="1" stop-color="#19b5ff" stop-opacity="0"/></radialGradient></defs><path d="M60 60 L30 6 A62 62 0 0 1 90 6 Z" fill="url(#g)"/><path d="M60 12 L69 34 L60 29 L51 34 Z" fill="#fff" stroke="#19b5ff" stroke-width="2" stroke-linejoin="round"/></svg>');
   function ensureGpsLayer(map) {
     if (gpsLayer && allLayers(map.getLayers(), []).includes(gpsLayer)) return;
     gpsSource = new ol.source.Vector();
@@ -522,9 +546,20 @@ body .kgrs-force-hide{display:none!important}
       source: gpsSource, zIndex: 9999,
       style: (f) => {
         const k = f.get('k');
-        if (k === 'acc') return new ol.style.Style({ fill: new ol.style.Fill({ color: 'rgba(25,181,255,.14)' }), stroke: new ol.style.Stroke({ color: 'rgba(25,181,255,.75)', width: 1.5 }) });
-        if (k === 'halo') return new ol.style.Style({ image: new ol.style.Circle({ radius: 17, fill: new ol.style.Fill({ color: 'rgba(25,181,255,.28)' }) }) });
-        return new ol.style.Style({ image: new ol.style.Circle({ radius: 8.5, fill: new ol.style.Fill({ color: '#19b5ff' }), stroke: new ol.style.Stroke({ color: '#fff', width: 3.5 }) }) });
+        const dot = () => new ol.style.Style({ image: new ol.style.Circle({ radius: 8.5, fill: new ol.style.Fill({ color: '#19b5ff' }), stroke: new ol.style.Stroke({ color: '#fff', width: 3.5 }) }) });
+        try {
+          if (k === 'acc') return new ol.style.Style({ fill: new ol.style.Fill({ color: 'rgba(25,181,255,.14)' }), stroke: new ol.style.Stroke({ color: 'rgba(25,181,255,.75)', width: 1.5 }) });
+          if (k === 'dir') {
+            const rad = (f.get('rot') || 0) * Math.PI / 180;
+            if (typeof ol.style.Icon === 'function') return new ol.style.Style({ image: new ol.style.Icon({ src: DIR_SVG, rotation: rad, rotateWithView: false, anchor: [0.5, 0.5], scale: 0.85 }) });
+            if (typeof ol.style.RegularShape === 'function')      // rezerva: trougao ispred tacke
+              return new ol.style.Style({ image: new ol.style.RegularShape({ points: 3, radius: 9, rotation: rad, rotateWithView: false, displacement: [Math.sin(rad) * 27, Math.cos(rad) * 27], fill: new ol.style.Fill({ color: '#fff' }), stroke: new ol.style.Stroke({ color: '#19b5ff', width: 2 }) }) });
+            return new ol.style.Style({});
+          }
+          if (k === 'tap') return new ol.style.Style({ image: new ol.style.Circle({ radius: 10, stroke: new ol.style.Stroke({ color: '#d9f244', width: 3 }), fill: new ol.style.Fill({ color: 'rgba(217,242,68,.18)' }) }) });
+          if (k === 'halo') return new ol.style.Style({ image: new ol.style.Circle({ radius: 17, fill: new ol.style.Fill({ color: 'rgba(25,181,255,.28)' }) }) });
+          return dot();
+        } catch (e) { return k === 'dot' ? dot() : new ol.style.Style({}); }     // greska u stilu nikad ne smije ugasiti tacku
       },
     });
     map.addLayer(gpsLayer);
@@ -542,6 +577,12 @@ body .kgrs-force-hide{display:none!important}
     if (acc > 60 && raw) return;                  // odbaci jako loša mjerenja kad već imamo poziciju
     kalman(xy[0], xy[1], acc, p.timestamp || Date.now(), p.coords.speed);
     raw = { x: KF.x, y: KF.y, acc, t: Date.now() };
+    // kurs: iz kretanja (ako se krecemo), inace iz GPS-a (brzina > 0.8 m/s), a kompas popunjava mirovanje
+    trail.push({ x: raw.x, y: raw.y, t: raw.t }); while (trail.length > 1 && raw.t - trail[0].t > 8000) trail.shift();
+    const o = trail[0], mdx = raw.x - o.x, mdy = raw.y - o.y;
+    if (Math.hypot(mdx, mdy) >= 4) { moveH = (Math.atan2(mdx, mdy) * 180 / Math.PI + 360) % 360; moveT = raw.t; setHeading(moveH, false, 0.7); }
+    else if (typeof p.coords.heading === 'number' && isFinite(p.coords.heading) && p.coords.speed > 0.8) { moveH = p.coords.heading; moveT = raw.t; setHeading(moveH, false, 0.7); }
+    else if (compassH !== null) setHeading(compassH, false);
     drawGps(map);
     refreshStatus();
   }
@@ -549,12 +590,51 @@ body .kgrs-force-hide{display:none!important}
   function drawGps(map) {
     ensureGpsLayer(map);
     const c = calibrated();
-    gpsSource.clear();
+    gpsSource.clear(); tapFeat = null; dirFeat = null;
     const a = new ol.Feature(new ol.geom.Circle(c, Math.max(raw.acc, 0.5))); a.set('k', 'acc');
+    const feats = [a];
+    if (heading !== null) { dirFeat = new ol.Feature(new ol.geom.Point(c)); dirFeat.set('k', 'dir'); dirFeat.set('rot', heading); feats.push(dirFeat); }
     const h = new ol.Feature(new ol.geom.Point(c)); h.set('k', 'halo');
     const d = new ol.Feature(new ol.geom.Point(c)); d.set('k', 'dot');
-    gpsSource.addFeatures([a, h, d]);
+    feats.push(h, d);
+    gpsSource.addFeatures(feats);
+    if (tapCoord) addTap();
     if (follow) map.getView().animate({ center: c, duration: 250 });
+  }
+  function addTap() {
+    const map = getMap(); if (!map || !tapCoord) return;
+    ensureGpsLayer(map);
+    if (tapFeat) { try { gpsSource.removeFeature(tapFeat); } catch (e) { /* ok */ } }
+    tapFeat = new ol.Feature(new ol.geom.Point(tapCoord)); tapFeat.set('k', 'tap'); gpsSource.addFeature(tapFeat);
+  }
+  function clearTap() { tapCoord = null; if (tapFeat && gpsSource) { try { gpsSource.removeFeature(tapFeat); } catch (e) { /* ok */ } } tapFeat = null; }
+
+  /* ---- kurs (smjer u kojem smo okrenuti) ---- */
+  const angDiff = (a, b) => ((a - b + 540) % 360) - 180;
+  function setHeading(hd, draw, k) {
+    if (hd === null || !isFinite(hd)) return;
+    hd = ((hd % 360) + 360) % 360;
+    heading = heading === null ? hd : (heading + (k || 0.3) * angDiff(hd, heading) + 360) % 360;   // glađenje po krugu
+    if (dirFeat) { dirFeat.set('rot', heading); dirFeat.changed(); }
+    else if (draw !== false && raw) drawGps(getMap());
+  }
+  // kompas iz senzora orijentacije: kurs gornje ivice telefona (kad je ravan) ili zadnje kamere (kad je uspravan)
+  function compassHeading(alpha, beta, gamma) {
+    const d = Math.PI / 180, z = alpha * d, x = beta * d, y = gamma * d;
+    const cZ = Math.cos(z), sZ = Math.sin(z), cX = Math.cos(x), sX = Math.sin(x), cY = Math.cos(y), sY = Math.sin(y);
+    // stupci rotacione matrice R = Rz(alpha) * Rx(beta) * Ry(gamma): ose uredjaja u svijetu (x istok, y sjever, z gore)
+    const topE = -cX * sZ, topN = cX * cZ;                                           // y-osa (gornja ivica)
+    const backE = -(cZ * sY + cY * sZ * sX), backN = -(sZ * sY - cZ * cY * sX);      // -z osa (zadnja kamera)
+    const useTop = Math.hypot(topE, topN) >= Math.hypot(backE, backN);
+    const e = useTop ? topE : backE, n = useTop ? topN : backN;
+    return (Math.atan2(e, n) * 180 / Math.PI + 360) % 360;
+  }
+  function onOrient(e) {
+    if (e.alpha === null || e.alpha === undefined) return;
+    if (e.type === 'deviceorientation' && !e.absolute) return;      // relativni alpha nije sjever
+    const now = Date.now(); if (now - lastOri < 120) return; lastOri = now;
+    compassH = compassHeading(e.alpha, e.beta || 0, e.gamma || 0);
+    if (now - moveT > 4000) setHeading(compassH);                     // dok hodamo vjerujemo kretanju
   }
 
   function datumWarning(map) {
@@ -573,14 +653,16 @@ body .kgrs-force-hide{display:none!important}
     setPill('warn', 'Tražim signal…', '');
     follow = true;
     setTimeout(() => { if (watchId !== null && !raw) { setPill('bad', 'Nema signala', ''); setHint('GPS ne javlja poziciju. Provjerite da je <b>lokacija uključena</b> i da je aplikaciji <b>dozvoljen pristup lokaciji</b> (Podešavanja → Aplikacije).', true, 10000); } }, 20000);
+    window.addEventListener('deviceorientationabsolute', onOrient, true); window.addEventListener('deviceorientation', onOrient, true);
     watchId = navigator.geolocation.watchPosition(onPos, (e) => { setPill('bad', 'GPS greška', e.message); },
       { enableHighAccuracy: true, maximumAge: 500, timeout: 25000 });
     try { navigator.wakeLock && navigator.wakeLock.request('screen').then((w) => { wakeLock = w; }).catch(() => {}); } catch (e) { /* ok */ }
   }
   function stop() {
     if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-    watchId = null; raw = null; KF.x = null;
-    if (gpsSource) gpsSource.clear();
+    window.removeEventListener('deviceorientationabsolute', onOrient, true); window.removeEventListener('deviceorientation', onOrient, true);
+    watchId = null; raw = null; KF.x = null; heading = null; compassH = null; moveH = null; trail = [];
+    if (gpsSource) { gpsSource.clear(); tapFeat = null; dirFeat = null; if (tapCoord) addTap(); }
     try { wakeLock && wakeLock.release(); } catch (e) { /* ok */ }
     refs.go.className = 'go'; refs.goT.textContent = 'Kreni';
     setPill('', 'GPS isključen', ''); refreshStatus();
@@ -660,23 +742,26 @@ body .kgrs-force-hide{display:none!important}
     const actions = h('div', 'actions');
     const calBtn = h('button', 'chip-btn', '⌖ Kalibriši');
     const calX = h('button', 'chip-btn x', '✕'); calX.style.display = 'none'; calX.title = 'Ukloni kalibraciju';
-    actions.append(calBtn, calX);
+    const detBtn = h('button', 'chip-btn', 'Detalji ovdje'); detBtn.style.display = 'none';
+    actions.append(calBtn, calX, detBtn);
     st.append(s1, s2, actions); row2.append(st);
     const handle = h('button', 'handle'); handle.title = 'Sklopi/rasklopi';
     const ownersBtn = h('button', 'owners-toggle'); const ownersL = h('b', null, 'Vlasnici'); const ownersC = h('span', null, '');
     ownersBtn.append(ownersL, ownersC);
     const owners = h('ul', 'owners'); const ownersWrap = h('div', 'owners-wrap'); ownersWrap.append(owners);
-    const go = h('button', 'go'); const goT = h('span', null, 'Kreni'); go.append(goT, h('i'));
+    const go = h('button', 'go'); const goT = h('span', null, 'Kreni'); go.append(h('i'), goT);
     sheet.append(handle, row1, divider, row2, ownersBtn, ownersWrap, go);
 
-    root.append(top, rail, layers, hint, sheet);
+    const detail = h('div', 'detail glass');
+    root.append(top, rail, layers, hint, detail, sheet);
     document.body.appendChild(root);
-    Object.assign(refs, { root, sheet, layers, close, pill, pt, ps, recenter, hint, t1, t2, chips, s1, s2, st, calBtn, calX, ownersBtn, ownersL, ownersC, owners, go, goT });
+    Object.assign(refs, { root, sheet, layers, detail, detBtn, close, pill, pt, ps, recenter, hint, t1, t2, chips, s1, s2, st, calBtn, calX, ownersBtn, ownersL, ownersC, owners, go, goT });
 
     go.onclick = () => (watchId === null ? start() : stop());
     handle.onclick = () => sheet.classList.toggle('mini');
     recenter.onclick = () => { follow = true; recenter.style.opacity = '.55'; if (raw) getMap().getView().animate({ center: calibrated(), duration: 250 }); };
     calBtn.onclick = beginCalibration; calX.onclick = resetCalibration;
+    detBtn.onclick = () => { if (raw) queryAt(calibrated()); };
     ownersBtn.onclick = () => { owners.classList.toggle('open'); ownersBtn.lastChild.textContent = owners.classList.contains('open') ? 'sakrij ▴' : 'prikaži ▾'; };
     close.onclick = closeMap;
     const zoomBy = (d) => { const v = getMap().getView(); v.animate({ zoom: (v.getZoom() || 0) + d, duration: 200 }); };
@@ -714,6 +799,7 @@ body .kgrs-force-hide{display:none!important}
     refs.calX.style.display = cal ? '' : 'none';
     refs.calBtn.textContent = cal ? '⌖ Kalibrisano · ' + Math.hypot(cal.dx, cal.dy).toFixed(1) + ' m' + (cal.pts.length > 1 ? ' (' + cal.pts.length + ')' : '') : '⌖ Kalibriši';
     refs.calBtn.className = 'chip-btn' + (cal ? ' acc' : '');
+    refs.detBtn.style.display = 'none';
     if (watchId === null) {
       refs.st.className = 'st off'; refs.s1.textContent = ''; refs.s2.textContent = ''; return;
     }
@@ -724,12 +810,13 @@ body .kgrs-force-hide{display:none!important}
     setPill(acc <= 5 ? 'ok' : acc <= 15 ? 'warn' : 'bad', 'GPS ±' + acc + ' m', cal ? 'kalibrisano' : acc <= 5 ? 'odlično' : acc <= 15 ? 'dobro' : 'slabo');
     refs.go.className = 'go run'; refs.goT.textContent = 'Stop';
     const rings = parcelRings(getMap());
-    if (!rings.length) { refs.st.className = 'st'; refs.s1.textContent = 'Pozicija prikazana'; refs.s2.textContent = 'E ' + c[0].toFixed(1) + ' · N ' + c[1].toFixed(1); return; }
+    if (!rings.length) { refs.detBtn.style.display = ''; refs.st.className = 'st'; refs.s1.textContent = 'Pozicija prikazana'; refs.s2.textContent = 'E ' + c[0].toFixed(1) + ' · N ' + c[1].toFixed(1); return; }
     const ring = rings[0], inside = inRing(c, ring), d = distRing(c, ring);
     const near = d < raw.acc;
     refs.st.className = 'st ' + (near ? 'warn' : inside ? 'ok' : 'bad');
     refs.s1.textContent = near ? 'Na međi parcele' : inside ? 'UNUTAR parcele' : 'IZVAN parcele';
     refs.s2.textContent = d.toFixed(1) + ' m od najbliže međe' + (near ? ' (unutar greške GPS-a)' : '');
+    refs.detBtn.style.display = (!inside || near) ? '' : 'none';   // stojimo na drugoj parceli (ili uz među)
   }
 
   /* ------------------------------------------------------------------ */
@@ -743,6 +830,7 @@ body .kgrs-force-hide{display:none!important}
     mounted = { c, orig: map.getTarget(), t };
     map.setTarget(c);
     installBases(map);
+    map.on('singleclick', onMapTap);
     try { const v = map.getView(); if (v.getMaxZoom && v.getMaxZoom() < 21 && v.setMaxZoom) v.setMaxZoom(21); } catch (e) { /* ok */ }
     map.updateSize();
     refs.root.classList.add('on');
@@ -763,11 +851,11 @@ body .kgrs-force-hide{display:none!important}
     if (!mounted) return;
     const map = getMap();
     if (watchId !== null) stop();
-    refs.layers.classList.remove('on');
+    refs.layers.classList.remove('on'); refs.detail.classList.remove('on'); clearTap(); qSeq++;
     if (map) {
       removeBases(map);
       if (gpsLayer) { map.removeLayer(gpsLayer); gpsLayer = null; gpsSource = null; }
-      map.un('pointerdrag', onDrag);
+      map.un('pointerdrag', onDrag); map.un('singleclick', onMapTap);
       map.setTarget(mounted.orig); map.updateSize();
     }
     mounted.c.remove(); mounted = null; mapRequested = 0;
@@ -905,6 +993,166 @@ body .kgrs-force-hide{display:none!important}
     const sh = refs.sheet.getBoundingClientRect(), top = box.getBoundingClientRect().top;
     box.style.maxHeight = Math.max(160, (sh.width > innerWidth * 0.7 ? sh.top : innerHeight) - top - 10) + 'px';
   }
+  /* ------------------------------------------------------------------ */
+  /* DETALJI PARCELE (GetFeatureInfo njihovog WMS-a, kao da kliknemo na mapu) */
+  /* ------------------------------------------------------------------ */
+  const INFO_FORMATS = ['application/json', 'application/geojson', 'application/vnd.ogc.gml', 'text/html', 'text/plain'];
+  const FRIENDLY = [[/^(parcela|br_?parc\w*|brparc|parcel\w*|broj|parc_?br\w*)$/i, 'Parcela'], [/^(ko|kat_?opstina|katastarska_?opstina|ko_?naziv|kat\w*op\w*)$/i, 'Katastarska opština'],
+    [/^(povrsina|površina|pov|area|shape_?area|p_?ukupno|povrsina_?m2)$/i, 'Površina'], [/^(list|br_?lista|brlist\w*)$/i, 'List'], [/^(opstina|općina|opština)$/i, 'Opština'], [/^(vlasnik\w*|posjednik\w*|nosilac\w*)$/i, 'Vlasnik']];
+  const SKIP = /^(geom|geometry|shape|the_geom|boundedby|objectid|fid|gid|id|shape_?length|shape_?len\w*|st_\w+|msgeometry|bbox|featuretype|layer|type|crs|pos|poslist|coordinates|lowercorner|uppercorner)$/i;
+  function pairsFromObj(o, out) {
+    Object.keys(o || {}).forEach((k) => { const v = o[k]; if (SKIP.test(k) || v === null || v === undefined || typeof v === 'object' || String(v).trim() === '' || String(v).length > 140) return; out.push([k, String(v).trim()]); });
+  }
+  function parseInfo(text) {
+    const t = (text || '').trim(), out = []; if (!t) return out;
+    if (t[0] === '{' || t[0] === '[') {
+      try { const j = JSON.parse(t); (Array.isArray(j) ? j : (j.features || [j])).slice(0, 3).forEach((f) => pairsFromObj(f.properties || f.attributes || f, out)); return out; } catch (e) { /* nije JSON */ }
+    }
+    if (t[0] === '<') {
+      if (/<(html|body|table)\b/i.test(t)) {
+        const d = new DOMParser().parseFromString(t, 'text/html');
+        d.querySelectorAll('table').forEach((tb) => {
+          const hs = [...tb.querySelectorAll('th')].map((x) => x.textContent.trim());
+          let n = 0;
+          tb.querySelectorAll('tr').forEach((tr) => {
+            const c = [...tr.querySelectorAll('td')].map((x) => x.textContent.trim());
+            if (!c.length || n > 2) return;
+            if (hs.length >= 2 && c.length === hs.length) { hs.forEach((k, i) => c[i] && out.push([k, c[i]])); n++; }
+            else if (c.length === 2 && c[0]) out.push([c[0], c[1]]);
+          });
+        });
+        if (!out.length) { d.body.textContent.split(/\n+/).forEach((l) => { const m = l.match(/^\s*([^:=]{2,40})\s*[:=]\s*(.{1,100})$/); if (m) out.push([m[1].trim(), m[2].trim()]); }); }
+        return out;
+      }
+      const d = new DOMParser().parseFromString(t, 'text/xml');
+      if (d.querySelector('parsererror')) return out;
+      d.querySelectorAll('*').forEach((e) => {
+        if (!e.children.length) { const tx = e.textContent.trim(); if (tx && tx.length <= 140 && !SKIP.test(e.localName)) out.push([e.localName, tx]); }
+        [...e.attributes].forEach((a) => { if (!/^(xmlns|xsi|gml|fid|id|srsName|version)/i.test(a.name) && !SKIP.test(a.name) && a.value && a.value.length <= 140 && !/^https?:/.test(a.value)) out.push([a.name, a.value]); });
+      });
+      return out;
+    }
+    t.split(/\n+/).forEach((l) => { const m = l.match(/^\s*([^:=]{2,40})\s*[:=]\s*(.{1,100})$/); if (m && !SKIP.test(m[1].trim())) out.push([m[1].trim(), m[2].trim()]); });
+    return out;
+  }
+  function buildDetail(pairs) {
+    const seen = new Set(), rows = []; let number = '';
+    pairs.forEach(([k, v]) => {
+      const key = k.toLowerCase(); if (seen.has(key)) return; seen.add(key);
+      const f = FRIENDLY.find((x) => x[0].test(k)); const label = f ? f[1] : k;
+      let val = v; if (label === 'Površina' && /^[\d.,]+$/.test(v)) val = v + ' m²';
+      if (label === 'Parcela' && !number) number = v;
+      rows.push([label, val]);
+    });
+    const ORD = ['Parcela', 'Površina', 'Katastarska opština', 'Opština', 'List', 'Vlasnik'], rk = (k) => (ORD.indexOf(k) < 0 ? 99 : ORD.indexOf(k));
+    rows.sort((a, b) => rk(a[0]) - rk(b[0]));
+    const shown = number ? rows.filter((r) => r[0] !== 'Parcela') : rows;   // broj je vec u naslovu
+    return { pairs: shown.slice(0, 14), number, title: number ? 'Parcela ' + number : 'Parcela ovdje' };
+  }
+  function positionDetail() {
+    const sh = refs.sheet.getBoundingClientRect();
+    refs.detail.style.bottom = sh.width > innerWidth * 0.7 ? Math.round(innerHeight - sh.top + 8) + 'px' : '';
+  }
+  function showDetail(state, data) {
+    const d = refs.detail; d.textContent = ''; d.classList.add('on'); positionDetail();
+    const head = h('div', 'dhead'); head.append(h('h3', null, (data && data.title) || 'Parcela ovdje'));
+    const x = h('button', 'chip-btn x', '✕'); x.onclick = hideDetail; head.append(x); d.append(head);
+    if (state === 'loading') d.append(h('div', 'none', 'Učitavam podatke sa sajta…'));
+    else if (state === 'empty') d.append(h('div', 'none', 'Sajt ne vraća podatke za ovu tačku. Dodirnite tačno na parcelu, ili pretražite broj parcele (tamo su i vlasnici).'));
+    else {
+      data.pairs.forEach(([k, v]) => { const r = h('div', 'kv'); r.append(h('span', null, k), h('b', null, v)); d.append(r); });
+      if (data.number) { const b = h('button', 'chip-btn acc', 'Pretraži parcelu ' + data.number + ' (vlasnici)'); b.onclick = () => searchThis(data.number); d.append(b); }
+    }
+  }
+  let qSeq = 0;
+  function hideDetail() { refs.detail.classList.remove('on'); qSeq++; clearTap(); }
+  /** Prebaci broj parcele u njihovu pretragu (vlasnici zahtijevaju njihovu pretragu i captchu). */
+  function searchThis(num) {
+    const inp = document.getElementById('i_parc');
+    if (inp) { inp.value = num; inp.dispatchEvent(new Event('input', { bubbles: true })); }
+    hideDetail(); closeMap();
+    setTimeout(() => { const da = document.getElementById('d_all'); if (da) da.scrollTo(0, 0); toast('Broj parcele <b>' + num + '</b> je upisan. Potvrdite „Нисам робот“ i pritisnite <b>Претражи</b>.', 7000); }, 900);
+  }
+  async function queryAt(coord) {
+    const map = getMap(); if (!map) return;
+    const my = ++qSeq; tapCoord = coord; addTap(); showDetail('loading');
+    const v = map.getView(), res = v.getResolution(), proj = v.getProjection();
+    const rank = (l) => { const t = l.get('title') || ''; return /^Парцеле/.test(t) ? 3 : /^Катастарска/.test(t) ? 2 : l.getVisible() ? 1 : 0; };
+    const layers = allLayers(map.getLayers(), []).filter((l) => { const so = l.getSource && l.getSource(); return so && typeof so.getFeatureInfoUrl === 'function'; }).sort((a, b) => rank(b) - rank(a)).slice(0, 2);
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 12000);
+    try {
+      for (const l of layers) {
+        if (my !== qSeq) return;
+        // svi formati odjednom (server prihvata onaj koji podrzava); biramo prvi sa podacima po prioritetu
+        const results = await Promise.all(INFO_FORMATS.map(async (fmt) => {
+          try {
+            const url = l.getSource().getFeatureInfoUrl(coord, res, proj, { INFO_FORMAT: fmt, FEATURE_COUNT: 5 }); if (!url) return [];
+            const r = await fetch(url, { credentials: 'include', signal: ctl.signal }); if (!r.ok) return [];
+            return parseInfo(await r.text());
+          } catch (e) { return []; }
+        }));
+        const pairs = results.find((x) => x.length);
+        if (pairs) { if (my === qSeq) showDetail('ok', buildDetail(pairs)); return; }
+      }
+    } finally { clearTimeout(to); }
+    if (my === qSeq) showDetail('empty');
+  }
+  function onMapTap(e) { if (calMode || !mounted) return; queryAt(e.coordinate); }
+
+  /* ------------------------------------------------------------------ */
+  /* DOKTOR SKROLA: ako prevlacenje prstom ne skrola stranicu, nadji uzrok i popravi */
+  /* ------------------------------------------------------------------ */
+  let toastEl = null, toastT = 0;
+  function toast(html, ms) {
+    if (!toastEl) { toastEl = document.createElement('div'); toastEl.id = 'kgrs-toast'; document.body.appendChild(toastEl); }
+    toastEl.innerHTML = html; toastEl.classList.add('on'); clearTimeout(toastT);
+    if (ms) toastT = setTimeout(() => toastEl.classList.remove('on'), ms);
+  }
+  const idOf = (e) => (e.id ? '#' + e.id : '') + (typeof e.className === 'string' && e.className.trim() ? '.' + e.className.trim().split(/\s+/).slice(0, 2).join('.') : '') || e.tagName;
+  function runDoctor(t) {
+    const da = document.getElementById('d_all'), notes = []; if (!da) return notes;
+    const cs = getComputedStyle(da);
+    if (cs.overflowY !== 'auto' && cs.overflowY !== 'scroll') { da.style.setProperty('overflow-y', 'auto', 'important'); notes.push('overflow-y=' + cs.overflowY); }
+    if (cs.position !== 'fixed') { da.style.setProperty('position', 'fixed', 'important'); notes.push('position=' + cs.position); }
+    if (cs.pointerEvents === 'none') { da.style.setProperty('pointer-events', 'auto', 'important'); notes.push('pointer-events:none na #d_all'); }
+    for (let e = t; e && e !== document.documentElement; e = e.parentElement) {
+      const c = getComputedStyle(e);
+      if (/^(none|pan-x|pinch-zoom)$/.test(c.touchAction)) { e.style.setProperty('touch-action', 'pan-y', 'important'); notes.push('touch-action:' + c.touchAction + ' na ' + idOf(e)); }
+    }
+    if (notes.some((n) => /^touch-action/.test(n))) addStyle('kgrs-ta-all', 'html body #d_all,html body #d_all *{touch-action:pan-y pinch-zoom!important}');   // cijela stranica, ne samo lanac ispod prsta
+    if (t && !da.contains(t) && t !== document.body && t !== document.documentElement && !t.closest('#kgrs')) {
+      for (let e = t; e && e !== document.body; e = e.parentElement) {
+        const c = getComputedStyle(e);
+        if (c.position === 'fixed' || c.position === 'absolute') { e.classList.add('kgrs-force-hide'); forcedHidden.push(e); notes.push('sloj preko stranice: ' + idOf(e)); break; }
+      }
+    }
+    document.body.classList.remove('dimmed', 'dimmable', 'scrolling');
+    return notes;
+  }
+  let tStart = null, stuckN = 0;
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches[0], da = document.getElementById('d_all');
+    tStart = { y: t.clientY, x: t.clientX, top: da ? da.scrollTop : 0, target: e.target, time: Date.now() };
+  }, { capture: true, passive: true });
+  document.addEventListener('touchend', (e) => {
+    const s = tStart; tStart = null;
+    const da = document.getElementById('d_all'); if (!s || !da || mounted) return;
+    const t = e.changedTouches[0], dy = s.y - t.clientY, dx = Math.abs(s.x - t.clientX);
+    if (Math.abs(dy) < 60 || dx > Math.abs(dy) || Date.now() - s.time > 1500) return;           // nije brzi vertikalni potez
+    if (s.target.closest && s.target.closest('.ui.dropdown .menu, iframe, textarea, #kgrs, #kgrsmap, .kgrs-rc-wrap')) return;
+    setTimeout(() => {
+      const max = da.scrollHeight - da.clientHeight; if (max <= 4) return;
+      const moved = Math.abs(da.scrollTop - s.top) > 1, atEdge = (dy < 0 && s.top <= 1) || (dy > 0 && s.top >= max - 1);
+      if (moved || atEdge) { stuckN = 0; return; }
+      if (++stuckN < 2) return;
+      stuckN = 0;
+      const notes = runDoctor(s.target);
+      toast(notes.length ? 'Skrol je bio blokiran, popravljeno: <b>' + notes.join('; ') + '</b>. Pokušajte ponovo.'
+        : 'Skrol ne reaguje (uzrok nije nađen). <button id="kgrs-reload">Osvježi stranicu</button>', notes.length ? 9000 : 0);
+      const rb = document.getElementById('kgrs-reload'); if (rb) rb.onclick = () => location.reload();
+    }, 250);
+  }, { capture: true, passive: true });
+
   function sync() {
     const map = getMap();
     if (!refs.root || !map) return;
