@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.7.0
+// @version      0.7.1
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -294,7 +294,15 @@ body .kgrs-force-hide{display:none!important}
       sec.classList.toggle('kgrs-dup', rows.length > 0 && [...rows].every((tr) => tr.classList.contains('kgrs-dup')));
     });
   }
+  function fixTabs() {
+    document.querySelectorAll('.ui.pointing.menu .item, .ui.menu .item[data-tab]').forEach((i) => {
+      if (i.classList.contains('active')) { i.style.setProperty('background-color', '#d9f244', 'important'); i.style.setProperty('background-image', 'none', 'important'); i.style.setProperty('color', '#141507', 'important'); }
+      else { i.style.removeProperty('background-color'); i.style.removeProperty('background-image'); i.style.removeProperty('color'); }
+    });
+  }
+  document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.ui.menu .item')) { setTimeout(fixTabs, 30); setTimeout(fixTabs, 300); } }, true);
   function tidy() {
+    fixTabs();
     try { dedupeResults(); } catch (e) { /* nije kriticno */ }
     // dugme „Prijava“ (cijeli red) i „Детаљно“ ne trebaju
     const lg = document.getElementById('login');
@@ -913,7 +921,7 @@ body .kgrs-force-hide{display:none!important}
     prepPage(); tidy(); buildUi();
     let tt = 0; const mo = new MutationObserver(() => { clearTimeout(tt); tt = setTimeout(tidy, 250); });
     mo.observe(document.body, { childList: true, subtree: true });
-    setInterval(() => { try { sync(); fixRecaptcha(); } catch (e) { /* ok */ } }, 500);
+    setInterval(() => { try { sync(); fixRecaptcha(); fixTabs(); } catch (e) { /* ok */ } }, 500);
     setInterval(() => { if (watchId !== null && raw) { try { refreshStatus(); } catch (e) { /* ok */ } } }, 1500);
   }
   // tema se postavlja odmah (prije cekanja na ol), da stranica ne "bljesne" bijelo
