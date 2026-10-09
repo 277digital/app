@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.6.0
+// @version      0.7.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -30,7 +30,7 @@ body,#d_all,.ui,.ui.form,.ui.input input,.ui.dropdown{font-family:system-ui,-app
 #header,#headerlogo{display:none!important}
 #d_all{padding-top:calc(12px + env(safe-area-inset-top))!important;padding-bottom:calc(28px + env(safe-area-inset-bottom))!important}
 /* naslovi/tekst: bez bijele pozadine koju sajt stavlja iza njih */
-#content_m h1,#content_m h2,#content_m h3,#content_m h2 *,#content_m h3 *,#content_m .item p,#content_m .item p *,#content_m .item,#content_m .items-row,#content_m .maincol,#content_m [style*="background"]:not(.ui):not(.button):not(.label){background:none!important;background-color:transparent!important;background-image:none!important;text-shadow:none!important;box-shadow:none!important}
+#content_m h1,#content_m h2,#content_m h3,#content_m h2 *,#content_m h3 *,#content_m .item p,#content_m .item p *,#content_m .items-row>.item,#content_m .items-row,#content_m .maincol,#content_m [style*="background"]:not(.ui):not(.button):not(.label):not(.item){background:none!important;background-color:transparent!important;background-image:none!important;text-shadow:none!important;box-shadow:none!important}
 #content_m h2,#content_m h2 *,#content_m h3{color:var(--fg)!important}
 html,body{-webkit-text-size-adjust:100%;touch-action:manipulation}
 #content_m .ui.button,#content_m .ui.dropdown,#content_m .ui.menu .item{transition:none!important}
@@ -40,13 +40,14 @@ html,body{-webkit-text-size-adjust:100%;touch-action:manipulation}
 #content_m .item p,#content_m .item p span{color:var(--mut)!important;font-size:13px!important;text-align:left!important;line-height:1.45}
 table{max-width:100%!important}
 /* prijava */
+#login,#login~*,.ui.special.popup{display:none!important}
 #login{background:var(--s1)!important;color:var(--fg)!important;border-radius:999px!important;box-shadow:none!important;border:1px solid var(--line)!important;font-weight:600}
 td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!important}
 /* tabovi */
 .ui.pointing.menu{display:flex!important;width:100%!important;background:var(--s1)!important;border:0!important;border-radius:16px!important;padding:4px!important;box-shadow:none!important;margin:8px 0 14px!important;min-height:0!important}
 .ui.pointing.menu .item{flex:1!important;justify-content:center!important;color:var(--mut)!important;font-weight:600!important;border-radius:12px!important;padding:13px 8px!important;margin:0!important;border:0!important;background:transparent!important}
 .ui.pointing.menu .item:before,.ui.pointing.menu .item:after{display:none!important}
-.ui.pointing.menu .active.item{background:var(--acc)!important;color:var(--accfg)!important}
+#content_m .ui.pointing.menu .active.item,.ui.pointing.menu .active.item{background:var(--acc)!important;color:var(--accfg)!important}
 .ui.tab.segment,.ui.attached.tab.segment{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
 /* forma */
 .ui.form{width:100%!important;max-width:100%!important}
@@ -69,6 +70,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 .ui.message .header{color:var(--fg)!important}
 .ui.error.message{background:rgba(255,107,94,.12)!important;border-color:rgba(255,107,94,.4)!important;color:#ffc4be!important}
 /* captcha: prozor sa slikama je kod njih apsolutno pozicioniran i izlazi van ekrana; centriramo ga i skaliramo */
+.kgrs-rc-off,.kgrs-rc-off *{pointer-events:none!important}
 .kgrs-rc-wrap{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important;z-index:2147483600!important}
 .kgrs-rc-box{position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;margin:0!important;transform:scale(var(--rcs,1))!important;transform-origin:center center!important}
 /* captcha */
@@ -104,7 +106,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #d_info table[id^=parc_] td:nth-child(1):before{content:"Парцела"}
 #d_info table[id^=parc_] td:nth-child(2):before{content:"Лист"}
 #d_info table[id^=parc_] td:nth-child(3):before{content:"Површина"}
-#d_info table[id^=parc_] td:nth-child(5){display:none!important}
+#d_info table[id^=parc_] td:nth-child(5),#d_info table[id^=parc_] td:nth-child(4){display:none!important}
 #d_info table[id^=parc_] td:nth-child(6){grid-column:1/-1;order:1}
 #d_info table[id^=parc_] td:nth-child(4){grid-column:1/-1;order:2}
 #d_info table[id^=parc_] td button{width:100%!important;float:none!important;margin:0!important;display:flex!important;align-items:center;justify-content:center;gap:8px;min-height:54px;font-size:16px!important;font-weight:800!important}
@@ -294,6 +296,10 @@ body .kgrs-force-hide{display:none!important}
   }
   function tidy() {
     try { dedupeResults(); } catch (e) { /* nije kriticno */ }
+    // dugme „Prijava“ (cijeli red) i „Детаљно“ ne trebaju
+    const lg = document.getElementById('login');
+    if (lg) { const tb = lg.closest('table'); (tb || lg).style.setProperty('display', 'none', 'important'); }
+    document.querySelectorAll('#d_info table[id^=parc_] button').forEach((b) => { if (/^Детаљно$/.test(b.textContent.trim())) (b.closest('td') || b).style.setProperty('display', 'none', 'important'); });
     document.querySelectorAll('#d_all p, #d_all div, #d_all span').forEach((e) => {
       if (e.children.length <= 1 && e.textContent.length < 140 && /^\s*Републичка управа за геодетске/.test(e.textContent) && !e.querySelector('input,button,select')) e.style.setProperty('display', 'none', 'important');
     });
@@ -351,8 +357,11 @@ body .kgrs-force-hide{display:none!important}
     frames.forEach((fr) => {
       let wrap = fr; while (wrap.parentElement && wrap.parentElement !== document.body) wrap = wrap.parentElement;
       if (!wrap.parentElement) return;
-      const open = getComputedStyle(wrap).visibility !== 'hidden' && fr.offsetWidth > 50 && fr.offsetHeight > 50;
+      const st = wrap.style;   // njihov inline stil; racunati (computed) bi pokazao ono sto smo mi forsirali
+      const open = st.display !== 'none' && st.visibility !== 'hidden' && !(st.opacity !== '' && parseFloat(st.opacity) < 0.1)
+        && !(parseFloat(st.top) < -1000 || parseFloat(st.left) < -1000) && fr.offsetWidth > 50 && fr.offsetHeight > 50;
       let box = fr; while (box.parentElement && box.parentElement !== wrap) box = box.parentElement;
+      wrap.classList.toggle('kgrs-rc-off', !open);
       if (!open) { if (wrap.classList.contains('kgrs-rc-wrap')) { wrap.classList.remove('kgrs-rc-wrap'); box.classList.remove('kgrs-rc-box'); box.style.removeProperty('width'); box.style.removeProperty('height'); } return; }
       const w = fr.offsetWidth, hh = fr.offsetHeight;
       const k = Math.min(1, (innerWidth - 12) / w, (innerHeight - 12) / hh);
@@ -511,8 +520,9 @@ body .kgrs-force-hide{display:none!important}
       },
     });
     map.addLayer(gpsLayer);
-    map.on('pointerdrag', () => { if (follow && watchId !== null) { follow = false; refs.recenter.style.opacity = '1'; } });
+    map.on('pointerdrag', onDrag);
   }
+  function onDrag() { if (follow && watchId !== null) { follow = false; refs.recenter.style.opacity = '1'; } }
 
   function onPos(p) {
     const map = getMap();
@@ -554,6 +564,7 @@ body .kgrs-force-hide{display:none!important}
     refs.go.className = 'go wait'; refs.goT.textContent = 'Traži…';
     setPill('warn', 'Tražim signal…', '');
     follow = true;
+    setTimeout(() => { if (watchId !== null && !raw) { setPill('bad', 'Nema signala', ''); setHint('GPS ne javlja poziciju. Provjerite da je <b>lokacija uključena</b> i da je aplikaciji <b>dozvoljen pristup lokaciji</b> (Podešavanja → Aplikacije).', true, 10000); } }, 20000);
     watchId = navigator.geolocation.watchPosition(onPos, (e) => { setPill('bad', 'GPS greška', e.message); },
       { enableHighAccuracy: true, maximumAge: 500, timeout: 25000 });
     try { navigator.wakeLock && navigator.wakeLock.request('screen').then((w) => { wakeLock = w; }).catch(() => {}); } catch (e) { /* ok */ }
@@ -699,6 +710,8 @@ body .kgrs-force-hide{display:none!important}
       refs.st.className = 'st off'; refs.s1.textContent = ''; refs.s2.textContent = ''; return;
     }
     if (!raw) { refs.st.className = 'st warn'; refs.s1.textContent = 'Tražim GPS signal…'; refs.s2.textContent = 'Izađite na otvoreno'; return; }
+    const age = Date.now() - raw.t;
+    if (age > 8000) { setPill('bad', 'Slab signal', ''); refs.st.className = 'st bad'; refs.s1.textContent = 'Slab GPS signal'; refs.s2.textContent = 'Posljednje mjerenje prije ' + Math.round(age / 1000) + ' s'; return; }
     const acc = Math.round(raw.acc), c = calibrated();
     setPill(acc <= 5 ? 'ok' : acc <= 15 ? 'warn' : 'bad', 'GPS ±' + acc + ' m', cal ? 'kalibrisano' : acc <= 5 ? 'odlično' : acc <= 15 ? 'dobro' : 'slabo');
     refs.go.className = 'go run'; refs.goT.textContent = 'Stop';
@@ -743,7 +756,12 @@ body .kgrs-force-hide{display:none!important}
     const map = getMap();
     if (watchId !== null) stop();
     refs.layers.classList.remove('on');
-    if (map) { removeBases(map); map.setTarget(mounted.orig); map.updateSize(); }
+    if (map) {
+      removeBases(map);
+      if (gpsLayer) { map.removeLayer(gpsLayer); gpsLayer = null; gpsSource = null; }
+      map.un('pointerdrag', onDrag);
+      map.setTarget(mounted.orig); map.updateSize();
+    }
     mounted.c.remove(); mounted = null; mapRequested = 0;
     refs.root.classList.remove('on');
   }
@@ -758,6 +776,24 @@ body .kgrs-force-hide{display:none!important}
   }
   let forcedHidden = [];
   function unforce() { forcedHidden.forEach((e) => e.classList.remove('kgrs-force-hide')); forcedHidden = []; }
+  /** Safety net: nakon zatvaranja mape ne smije ostati nijedan sloj preko stranice koji guta dodire. */
+  function unfreeze() {
+    if (mounted) return;
+    const da = document.getElementById('d_all');
+    if (da) { da.style.setProperty('overflow-y', 'auto', 'important'); da.style.setProperty('overflow-x', 'hidden', 'important'); }
+    document.body.classList.remove('dimmed', 'dimmable', 'scrolling');
+    [[0.5, 0.5], [0.5, 0.25], [0.5, 0.8], [0.15, 0.5]].forEach(([fx, fy]) => {
+      for (const e of document.elementsFromPoint(innerWidth * fx, innerHeight * fy)) {
+        if (da && (e === da || da.contains(e))) break;                 // stigli smo do sadrzaja: ispod nema blokera
+        if (e === document.body || e === document.documentElement) break;
+        if (e.closest('#kgrs') || e.closest('.kgrs-rc-wrap')) continue;  // nas prekrivac / otvoren reCAPTCHA izazov
+        const r = e.getBoundingClientRect();
+        if (r.width >= innerWidth * 0.8 && r.height >= innerHeight * 0.5 && getComputedStyle(e).pointerEvents !== 'none') {
+          e.classList.add('kgrs-force-hide'); forcedHidden.push(e);
+        }
+      }
+    });
+  }
   function closeMap() {
     const t = mounted && mounted.t;
     const modal = t && (t.closest('.ui.modal') || t.closest('[class*=modal]'));
@@ -767,6 +803,7 @@ body .kgrs-force-hide{display:none!important}
     const b = (modal && all.find((x) => modal.contains(x))) || all.find(visibleEl) || all[0];
     if (b) b.click();
     setTimeout(() => ensureClosed(modal, t), 700);
+    setTimeout(unfreeze, 1700); setTimeout(unfreeze, 3500);
   }
   // Ako se njihov modal ipak nije zatvorio (a ostavlja zatamnjenje koje blokira dodire), zatvaramo ga preko jQuery-ja, pa na silu.
   function ensureClosed(modal, t) {

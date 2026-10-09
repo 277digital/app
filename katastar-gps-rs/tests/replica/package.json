@@ -1,0 +1,10 @@
+{
+  "name": "replica-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild glob.js --bundle --outfile=glob.bundle.js --format=iife",
+    "qa": "npm run build && node qa.mjs"
+  },
+  "devDependencies": { "esbuild": "^0.25.0", "jquery": "3.7.1", "ol": "6.15.1", "playwright-core": "^1.50.0", "proj4": "^2.15.0", "semantic-ui-css": "2.5.0" }
+}
