@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.3.0
+// @version      0.4.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -19,21 +19,21 @@
   const CSS = `
 :root{--bg:#101114;--s1:#1a1b21;--s2:#23252d;--line:#2e3039;--fg:#f2f3f5;--mut:#9aa0ac;--acc:#d9f244;--accfg:#141507;--bad:#ff6b5e;--ok:#58e08a;--warn:#ffb84d;--r:18px}
 html{color-scheme:dark}
-html{background:var(--bg)!important;height:auto!important;overflow:visible!important}
-body{background:var(--bg)!important;color:var(--fg)!important;overflow-x:hidden!important;overflow-y:visible!important;height:auto!important;min-height:100%;max-width:100vw!important;margin:0!important}
+html{background:var(--bg)!important;height:100%!important;overflow:hidden!important}
+body{background:var(--bg)!important;color:var(--fg)!important;overflow:hidden!important;height:100%!important;max-width:100vw!important;margin:0!important;padding:0!important;border:0!important;position:relative!important}
 body,#d_all,.ui,.ui.form,.ui.input input,.ui.dropdown{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif!important}
-#d_all{height:auto!important;min-height:100vh;overflow:visible!important;background:var(--bg)!important}
+#d_all{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;border:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;background:var(--bg)!important;box-sizing:border-box!important}
 *{-webkit-tap-highlight-color:transparent}
-#wrapper,#content_m,.maincol,.items-row,.item,.ui.container{width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:0!important;float:none!important;box-sizing:border-box!important;background:transparent!important}
+#wrapper,#content_m,.maincol,.items-row,.item,.ui.container{border:0!important;outline:0!important;box-shadow:none!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:0!important;float:none!important;box-sizing:border-box!important;background:transparent!important}
 .items-row{padding:0 16px!important}
 .items-row+.items-row{margin-top:6px!important}
 #header,#headerlogo{display:none!important}
-#d_all{padding-top:calc(10px + env(safe-area-inset-top))!important}
+#d_all{padding-top:calc(12px + env(safe-area-inset-top))!important;padding-bottom:calc(28px + env(safe-area-inset-bottom))!important}
 /* naslovi/tekst: bez bijele pozadine koju sajt stavlja iza njih */
 #content_m h1,#content_m h2,#content_m h3,#content_m h2 *,#content_m h3 *,#content_m .item p,#content_m .item p *,#content_m .item,#content_m .items-row,#content_m .maincol,#content_m [style*="background"]:not(.ui):not(.button):not(.label){background:none!important;background-color:transparent!important;background-image:none!important;text-shadow:none!important;box-shadow:none!important}
 #content_m h2,#content_m h2 *,#content_m h3{color:var(--fg)!important}
 html,body{-webkit-text-size-adjust:100%;touch-action:manipulation}
-.ui.button,.ui.dropdown,.ui.menu .item{transition:none!important}
+#content_m .ui.button,#content_m .ui.dropdown,#content_m .ui.menu .item{transition:none!important}
 #d_info .ui.blue.segment,#d_info table,#d_info .ui.attached.message{will-change:auto}
 #content_m h2{color:var(--fg)!important;font-size:22px!important;line-height:1.2;letter-spacing:-.01em;margin:14px 0 6px!important}
 #content_m h2 span,#content_m h2 strong{font-size:inherit!important}
@@ -74,10 +74,10 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 /* captcha */
 #ReCaptchContainer1,#ReCaptchContainer2{max-width:100%;overflow:hidden}
 /* dugmad */
-.ui.blue.button,.ui.blue.buttons .button{background:var(--acc)!important;color:var(--accfg)!important;border-radius:16px!important;font-weight:800!important;min-height:56px;font-size:17px!important;box-shadow:0 4px 14px rgba(217,242,68,.22)!important}
-.ui.button.disabled,.ui.disabled.button{opacity:.35!important;box-shadow:none!important}
-.ui.button{border-radius:14px!important;box-shadow:none!important}
-.ui.basic.button,.ui.button:not(.blue):not(.kgrs-btn){background:var(--s2)!important;color:var(--fg)!important}
+#content_m .ui.blue.button,#content_m .ui.blue.buttons .button{background:var(--acc)!important;color:var(--accfg)!important;border-radius:16px!important;font-weight:800!important;min-height:56px;font-size:17px!important;box-shadow:0 4px 14px rgba(217,242,68,.22)!important}
+#content_m .ui.button.disabled,#content_m .ui.disabled.button{opacity:.35!important;box-shadow:none!important}
+#content_m .ui.button{border-radius:14px!important;box-shadow:none!important}
+#content_m .ui.basic.button,#content_m .ui.button:not(.blue){background:var(--s2)!important;color:var(--fg)!important}
 /* rezultati */
 #d_info{margin:18px 0 28px}
 #d_info .ui.blue.segment{background:var(--s1)!important;border:1px solid var(--line)!important;border-radius:var(--r) var(--r) 0 0!important;box-shadow:none!important;color:var(--mut)!important;font-size:12px!important;padding:12px 16px!important;margin:0!important;gap:8px;flex-wrap:wrap}
@@ -104,7 +104,8 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #d_info table[id^=parc_] td button{width:100%!important;float:none!important;margin:0!important;display:flex!important;align-items:center;justify-content:center;gap:8px;min-height:54px;font-size:16px!important;font-weight:800!important}
 #d_info table[id^=parc_] td:nth-child(6) button{background:var(--acc)!important;color:var(--accfg)!important;box-shadow:0 6px 24px rgba(217,242,68,.22)!important}
 #d_info table[id^=parc_] td:nth-child(4) button{background:var(--s2)!important;color:var(--fg)!important;min-height:44px;font-weight:600!important}
-#d_info table[id^=parc_] td button i.icon{margin:0!important;background:transparent!important;opacity:1!important}
+#d_info table[id^=parc_] td button{padding:0 16px!important}
+#d_info table[id^=parc_] td button i.icon{position:static!important;width:auto!important;height:auto!important;line-height:1!important;margin:0 4px 0 0!important;padding:0!important;background:transparent!important;box-shadow:none!important;opacity:1!important}
 #d_info table.kgrs-owners tr{display:flex!important;justify-content:space-between;gap:12px;padding:11px 16px!important;border-top:1px solid var(--line)!important}
 #d_info table.kgrs-owners td:first-child{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:600}
 #d_info table.kgrs-owners td:last-child{color:var(--acc)!important;font-weight:800;white-space:nowrap}
@@ -114,8 +115,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #d_info table.kgrs-parts td:nth-child(3){color:var(--mut)!important}
 #d_info>table:last-of-type,#d_info>table.kgrs-parts{border-radius:0 0 var(--r) var(--r)!important;border-bottom:1px solid var(--line)!important;padding-bottom:6px!important}
 #d_info br{display:none}
-#footer{background:transparent!important;border:0!important;padding:10px 16px calc(24px + env(safe-area-inset-bottom))!important}
-#footer p{color:var(--mut)!important;font-size:12px!important;padding:0!important}
+#footer{display:none!important}
 .ui.modal,.ui.dimmer{background:rgba(0,0,0,.6)!important}
 .ui.modal>.header,.ui.modal>.content,.ui.modal>.actions{background:var(--s1)!important;color:var(--fg)!important}
 `;
@@ -138,7 +138,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .pill.warn .dot{background:#ffb84d;box-shadow:0 0 0 4px rgba(255,184,77,.2)}
 #kgrs .pill.bad .dot{background:#ff6b5e;box-shadow:0 0 0 4px rgba(255,107,94,.2)}
 #kgrs .pill small{display:none}
-#kgrs .hint{position:absolute;left:12px;right:12px;top:calc(56px + env(safe-area-inset-top));padding:12px 14px;border-radius:16px;font-size:14px;line-height:1.35;display:none}
+#kgrs .hint{position:absolute;left:12px;right:12px;top:calc(56px + env(safe-area-inset-top));right:60px;padding:12px 14px;border-radius:16px;font-size:14px;line-height:1.35;display:none}
 #kgrs .hint.on{display:block}
 #kgrs .hint b{color:#d9f244}
 #kgrs .hint button{margin-top:8px;background:#23252d;border-radius:10px;padding:8px 12px;font-weight:700}
@@ -180,14 +180,23 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs ul.owners li b{color:#d9f244;white-space:nowrap}
 @media (max-width:350px){#kgrs .t1{font-size:18px}#kgrs .go{width:86px;height:86px;font-size:17px;top:46px}#kgrs .row1,#kgrs .row2{padding-right:96px}#kgrs .pill{font-size:11px;padding:0 9px}}
 @media (max-height:700px) and (orientation:portrait){#kgrs .sheet{max-height:50vh}}
-@media (orientation:landscape) and (max-height:520px){#kgrs .sheet{left:auto;width:min(460px,58vw);max-height:calc(100vh - 78px - env(safe-area-inset-bottom))}#kgrs .hint{left:auto;width:min(460px,58vw)}}
+@media (orientation:landscape) and (max-height:520px){#kgrs .sheet{left:auto;width:min(460px,58vw);max-height:calc(100vh - 78px - env(safe-area-inset-bottom))}#kgrs .hint{left:auto;width:min(460px,58vw)}#kgrs .rail{right:auto;left:10px;top:calc(56px + env(safe-area-inset-top))}#kgrs .layers{right:auto;left:58px;top:calc(56px + env(safe-area-inset-top))}}
 #kgrs .none{color:#9aa0ac;font-size:13px;padding:6px 2px}
-.kgrs-fs{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;transform:none!important;overflow:hidden!important;z-index:2147482000!important;background:#000!important}
-.kgrs-fs-hide{display:none!important}
-.kgrs-shift-t{margin-top:54px!important}
-.kgrs-shift-b{margin-bottom:var(--kgrs-sh,0px)!important}
-html.kgrs-lock,html.kgrs-lock body{overflow:hidden!important}
-.kgrs-fs .ol-overlaycontainer-stopevent{top:var(--kgrs-top,58px)!important;height:calc(100% - var(--kgrs-top,58px) - var(--kgrs-sh,0px))!important}
+#kgrsmap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147482000;background:#0c0d10;overflow:hidden}
+#kgrsmap .ol-rotate,#kgrsmap .ol-attribution,#kgrsmap .ol-zoom{display:none!important}
+#kgrs .rail{position:absolute;right:10px;top:calc(60px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:8px}
+#kgrs .rail .rb{font-size:20px;font-weight:600}
+#kgrs .layers{position:absolute;right:58px;top:calc(60px + env(safe-area-inset-top));min-width:210px;max-width:calc(100vw - 80px);border-radius:18px;padding:8px;display:none}
+#kgrs .layers.on{display:block}
+#kgrs .layers h4{margin:6px 8px 4px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9aa0ac;font-weight:700}
+#kgrs .lrow{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;background:transparent;padding:12px 8px;border-radius:0;font-size:14px;font-weight:600;text-align:left}
+#kgrs .lrow+.lrow{border-top:1px solid rgba(255,255,255,.07)}
+#kgrs .sw{width:38px;height:22px;border-radius:11px;background:#33353d;position:relative;flex:none;transition:background .15s}
+#kgrs .sw:after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#9aa0ac;transition:left .15s,background .15s}
+#kgrs .lrow.on .sw{background:rgba(217,242,68,.35)}
+#kgrs .lrow.on .sw:after{left:19px;background:#d9f244}
+#kgrs .layers{width:max-content}
+@media (orientation:landscape) and (max-height:520px){#kgrs .layers{right:auto;left:58px;max-width:280px}}
 `;
 
   const addStyle = (id, css) => {
@@ -532,6 +541,12 @@ html.kgrs-lock,html.kgrs-lock body{overflow:hidden!important}
     top.append(close, right);
 
     const hint = h('div', 'hint glass');
+    const rail = h('div', 'rail');
+    const bLayers = h('button', 'rb glass', '▦'); bLayers.title = 'Slojevi mape';
+    const bZoomIn = h('button', 'rb glass', '+'); bZoomIn.title = 'Približi';
+    const bZoomOut = h('button', 'rb glass', '−'); bZoomOut.title = 'Udalji';
+    rail.append(bLayers, bZoomIn, bZoomOut);
+    const layers = h('div', 'layers glass');
 
     const sheet = h('div', 'sheet glass');
     const row1 = h('div', 'row1');
@@ -554,19 +569,19 @@ html.kgrs-lock,html.kgrs-lock body{overflow:hidden!important}
     const go = h('button', 'go'); const goT = h('span', null, 'Kreni'); go.append(goT, h('i'));
     sheet.append(handle, row1, divider, row2, ownersBtn, ownersWrap, go);
 
-    root.append(top, hint, sheet);
+    root.append(top, rail, layers, hint, sheet);
     document.body.appendChild(root);
-    Object.assign(refs, { root, sheet, close, pill, pt, ps, recenter, hint, t1, t2, chips, s1, s2, st, calBtn, calX, ownersBtn, ownersL, ownersC, owners, go, goT });
+    Object.assign(refs, { root, sheet, layers, close, pill, pt, ps, recenter, hint, t1, t2, chips, s1, s2, st, calBtn, calX, ownersBtn, ownersL, ownersC, owners, go, goT });
 
     go.onclick = () => (watchId === null ? start() : stop());
     handle.onclick = () => sheet.classList.toggle('mini');
     recenter.onclick = () => { follow = true; recenter.style.opacity = '.55'; if (raw) getMap().getView().animate({ center: calibrated(), duration: 250 }); };
     calBtn.onclick = beginCalibration; calX.onclick = resetCalibration;
     ownersBtn.onclick = () => { owners.classList.toggle('open'); ownersBtn.lastChild.textContent = owners.classList.contains('open') ? 'sakrij ▴' : 'prikaži ▾'; };
-    close.onclick = () => {
-      const b = [...document.querySelectorAll('.ui.modal .button, .modal .button, button, .button')].find((x) => /^Затвори$/.test(x.textContent.trim()));
-      if (b) b.click(); else leaveFullscreen();
-    };
+    close.onclick = closeMap;
+    const zoomBy = (d) => { const v = getMap().getView(); v.animate({ zoom: (v.getZoom() || 0) + d, duration: 200 }); };
+    bZoomIn.onclick = () => zoomBy(1); bZoomOut.onclick = () => zoomBy(-1);
+    bLayers.onclick = () => { if (layers.classList.toggle('on')) renderLayers(); };
     setPill('', 'GPS isključen', '');
     renderParcel();
   }
@@ -619,70 +634,68 @@ html.kgrs-lock,html.kgrs-lock body{overflow:hidden!important}
   /* ------------------------------------------------------------------ */
   /* 8. PRIKAZ PREKRIVACA KAD JE MAPA OTVORENA                           */
   /* ------------------------------------------------------------------ */
-  let fsEls = [], fsHidden = [], fsShift = [], fsTarget = null, fsScroll = null;
-  function enterFullscreen(t) {
-    // Cijeli lanac roditelja do <body> postaje fixed preko cijelog ekrana, a "braca" se sakrivaju:
-    // tako mapa popunjava ekran i kad je sajt drzi u modalu sa transformacijom, dimmeru ili omotacu.
-    const da = document.getElementById('d_all');
-    fsScroll = { y: window.scrollY, d: da ? da.scrollTop : 0, b: document.body.scrollTop };
-    const chain = []; for (let e = t; e && e !== document.body && e !== document.documentElement; e = e.parentElement) chain.push(e);
-    chain.forEach((e) => { e.classList.add('kgrs-fs'); fsEls.push(e); });
-    chain.forEach((e) => { [...(e.parentElement ? e.parentElement.children : [])].forEach((sib) => {
-      if (!chain.includes(sib) && sib.id !== 'kgrs' && sib.tagName !== 'SCRIPT' && sib.tagName !== 'STYLE' && sib.tagName !== 'LINK') { sib.classList.add('kgrs-fs-hide'); fsHidden.push(sib); } }); });
-    document.documentElement.classList.add('kgrs-lock');
-    fsTarget = t;
-    try { const v = getMap().getView(); if (v.getMaxZoom && v.getMaxZoom() < 21 && v.setMaxZoom) v.setMaxZoom(21); } catch (e) { /* ok */ }
-    shiftControls(t);
-    placeTopControls();
+  /* Mapu NE prepravljamo u njihovom modalu: prebacimo je (map.setTarget) u sopstveni fullscreen sloj,
+     a pri zatvaranju je vratimo i njihov modal zatvori njihov kod. Tako nema ostataka ni zatamnjenja. */
+  let mounted = null;
+  function mountMap(map, t) {
+    const c = document.createElement('div'); c.id = 'kgrsmap'; document.body.appendChild(c);
+    mounted = { c, orig: map.getTarget(), t };
+    map.setTarget(c);
+    try { const v = map.getView(); if (v.getMaxZoom && v.getMaxZoom() < 21 && v.setMaxZoom) v.setMaxZoom(21); } catch (e) { /* ok */ }
+    map.updateSize();
+    refs.root.classList.add('on');
+    if (innerHeight < 700 || innerWidth > innerHeight) refs.sheet.classList.add('mini');
+    renderParcel(); refreshStatus();
+    setTimeout(() => { map.updateSize(); fitParcel(map); }, 150);
   }
-  /** Njihove kontrole koje lebde u uglovima mape (npr. „Ортофото“, skala) pomjeramo da ne budu ispod nasih traka. */
-  function shiftControls(t) {
-    const tw = t.getBoundingClientRect().width;
-    t.querySelectorAll('*').forEach((e) => {
-      if (e.closest('#kgrs') || /^(CANVAS|SCRIPT|STYLE)$/.test(e.tagName) || /ol-overlaycontainer|ol-viewport/.test(e.className && e.className.toString())) return;
-      const cs = getComputedStyle(e);
-      if (cs.position !== 'absolute' && cs.position !== 'fixed') return;
-      if (e.parentElement.closest('.ol-overlaycontainer-stopevent') || e.parentElement.closest('.ol-overlaycontainer')) return; // pomjera se cijeli kontejner
-      const r = e.getBoundingClientRect(); if (r.width > tw * 0.8) return;
-      const top = parseFloat(cs.top), bottom = parseFloat(cs.bottom);
-      if (!isNaN(top) && top < 90 && (isNaN(bottom) || bottom > 90)) { e.classList.add('kgrs-shift-t'); fsShift.push(e); }
-      else if (!isNaN(bottom) && bottom < 120) { e.classList.add('kgrs-shift-b'); fsShift.push(e); }
+  /** Parcela se centrira iznad donjeg panela (ako je sajt drzi kao vektor). */
+  function fitParcel(map) {
+    const rings = parcelRings(map); if (!rings.length) return;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    rings[0].forEach(([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); });
+    const sh = refs.sheet.getBoundingClientRect(), wide = sh.width > innerWidth * 0.7;
+    const pad = [70, 30, (wide ? innerHeight - sh.top : 0) + 30, wide ? 30 : Math.min(sh.width, innerWidth * 0.6) + 30];
+    map.getView().fit([x0, y0, x1, y1], { padding: pad, maxZoom: 21, duration: 250 });
+  }
+  function unmountMap() {
+    if (!mounted) return;
+    const map = getMap();
+    if (watchId !== null) stop();
+    refs.layers.classList.remove('on');
+    if (map) { map.setTarget(mounted.orig); map.updateSize(); }
+    mounted.c.remove(); mounted = null; mapRequested = 0;
+    refs.root.classList.remove('on');
+  }
+  function closeMap() {
+    unmountMap();
+    // njihov modal zatvara njihov kod (dugme „Затвори“)
+    const btns = [...document.querySelectorAll('.ui.button, button, .button')].filter((x) => /^Затвори$/.test(x.textContent.trim()));
+    const b = btns.find(isShown) || btns[0];
+    if (b) b.click();
+  }
+  /** Slojevi mape (njihovi nazivi): ortofoto, katastarska opstina, parcele, zgrade... */
+  function renderLayers() {
+    const map = getMap(); const box = refs.layers; box.textContent = '';
+    box.append(h('h4', null, 'Слојеви'));
+    allLayers(map.getLayers(), []).forEach((l) => {
+      const title = l.get('title');
+      const vec = l.getSource && l.getSource() && typeof l.getSource().getFeatures === 'function';
+      if (!title || vec || l === gpsLayer) return;
+      const row = h('button', 'lrow' + (l.getVisible() ? ' on' : '')); row.append(h('span', null, title), h('span', 'sw'));
+      row.onclick = () => { l.setVisible(!l.getVisible()); row.classList.toggle('on', l.getVisible()); };
+      box.append(row);
     });
-  }
-  function placeTopControls() {
-    // OL kontejner (zoom +/−) ide ispod nasih pomjerenih kontrola u gornjem lijevom uglu (npr. „Ортофото“)
-    let bottom = 58;
-    fsShift.forEach((e) => { if (e.classList.contains('kgrs-shift-t')) { const r = e.getBoundingClientRect(); if (r.left < innerWidth / 2) bottom = Math.max(bottom, r.bottom + 6); } });
-    document.documentElement.style.setProperty('--kgrs-top', Math.ceil(bottom) + 'px');
-  }
-  function leaveFullscreen() {
-    fsEls.forEach((e) => e.classList.remove('kgrs-fs')); fsHidden.forEach((e) => e.classList.remove('kgrs-fs-hide'));
-    fsShift.forEach((e) => e.classList.remove('kgrs-shift-t', 'kgrs-shift-b'));
-    document.documentElement.classList.remove('kgrs-lock'); document.documentElement.style.removeProperty('--kgrs-sh'); document.documentElement.style.removeProperty('--kgrs-top');
-    fsEls = []; fsHidden = []; fsShift = []; fsTarget = null;
-    if (fsScroll) { const da = document.getElementById('d_all'); window.scrollTo(0, fsScroll.y); if (da) da.scrollTop = fsScroll.d; document.body.scrollTop = fsScroll.b; fsScroll = null; }
-  }
-  /** Visina donjeg panela -> CSS varijabla, da donje kontrole mape budu iznad panela (samo kad panel pokriva sirinu). */
-  function syncSheetVar() {
-    if (!refs.sheet || !fsTarget) return;
-    const r = refs.sheet.getBoundingClientRect();
-    const wide = r.width > innerWidth * 0.7;
-    document.documentElement.style.setProperty('--kgrs-sh', wide ? Math.round(innerHeight - r.top) + 'px' : '0px');
+    if (box.children.length === 1) box.append(h('div', 'none', 'Нема слојева'));
   }
   function sync() {
     const map = getMap();
-    const t = map && map.getTargetElement && map.getTargetElement();
-    if (!refs.root) return;
-    const wasOn = refs.root.classList.contains('on');
-    // prikaz samo nakon klika na „Прикажи на мапи“ i dok je mapa stvarno vidljiva
-    if (mapRequested && !fsTarget && Date.now() - mapRequested > 8000) mapRequested = 0; // mapa se nije otvorila
-    const visible = !!(mapRequested && isShown(t));
-    if (visible && !fsTarget) { enterFullscreen(t); map.updateSize(); if (innerHeight < 700 || innerWidth > innerHeight) refs.sheet.classList.add('mini'); }
-    if (visible) syncSheetVar();
-    if (!visible && fsTarget) { leaveFullscreen(); mapRequested = 0; }
-    refs.root.classList.toggle('on', visible);
-    if (visible && !wasOn) { renderParcel(); refreshStatus(); }
-    if (!visible && wasOn && watchId !== null) stop();
+    if (!refs.root || !map) return;
+    if (!mounted) {
+      if (mapRequested && Date.now() - mapRequested > 8000) mapRequested = 0;           // mapa se nije otvorila
+      const t = map.getTargetElement && map.getTargetElement();
+      if (mapRequested && isShown(t)) mountMap(map, t);                                  // tek nakon klika na „Прикажи на мапи“
+    }
+    refs.root.classList.toggle('on', !!mounted);
   }
 
   function boot() {

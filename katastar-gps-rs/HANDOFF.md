@@ -8,6 +8,11 @@ Hodati po placu uz GPS i vidjeti sebe na katastarskoj mapi RS; pretraga parcele 
 - `android/`: WebView aplikacija koja otvara ekatastar i ubacuje skript. `build.sh` gradi APK bez Gradle-a (Gradle/Google Maven su bili blokirani u cloud okruženju). Isti `debug.keystore` pa se nove verzije instaliraju preko starih.
 - Korijen projekta: samostalna PWA (mapa, uvoz GeoJSON-a, snimanje granica hodanjem).
 
+## Arhitektura mape (v0.4)
+- Mapu ne prepravljamo u njihovom modalu: `map.setTarget(#kgrsmap)` prebacuje je u sopstveni fullscreen sloj, a pri zatvaranju vraćamo target i klikćemo njihovo „Затвори“. Njihove kontrole (dugme Ортофото, +/−) nisu unutar OL viewporta, pa imamo sopstveni zoom i panel slojeva (nazivi iz `layer.get('title')`).
+- Stranica: kao u originalu `#d_all` je skroler (`position:fixed`), `html/body` zaključani, pa dokument ne može da raste („beskonačan skrol“).
+- Test replika (Playwright): fixture stranice + Semantic UI + ol, skripte u scratchpadu nisu u repou.
+
 ## Šta smo saznali o ekatastaru (iz konzole stranice)
 - ASP.NET WebForms + Semantic UI + OpenLayers. Pretraga: opština (ID, npr. Doboj = 34), katastarska opština, broj parcele, reCAPTCHA. Ključ parcele: `34_KZ_20112_Доња Пакленица_1`; „Прикажи на мапи“ zove `jumpTo(key); showMap();`.
 - Globalno dostupni: `map` (OpenLayers), `ol`, `proj4`. Projekcija mape **EPSG:31276** (MGI 1901 / Balkan zona 6), centar ≈ E 6508386, N 4942511.
