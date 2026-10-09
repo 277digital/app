@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.5.0
+// @version      0.6.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -79,7 +79,13 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #content_m .ui.button{border-radius:14px!important;box-shadow:none!important}
 #content_m .ui.basic.button,#content_m .ui.button:not(.blue){background:var(--s2)!important;color:var(--fg)!important}
 /* rezultati */
-#d_info{margin:18px 0 28px}
+#d_info{margin:18px 0 28px;display:block}
+.kgrs-dup{display:none!important}
+#d_info section.kgrs-dup,#d_info table[id^=parc_] tr.kgrs-dup,#d_info table[id^=parc_] tbody tr.kgrs-dup{display:none!important}
+#d_info section{display:block!important;border:1px solid var(--line);border-radius:18px;overflow:hidden;margin:0 0 12px;background:var(--s1)}
+#d_info section .ui.attached.message,#d_info section table,#d_info section .ui.blue.segment{border-left:0!important;border-right:0!important;border-radius:0!important}
+#d_info section .ui.blue.segment{border-top:0!important}
+#d_info table[id^=parc_] tr+tr{border-top:1px solid var(--line)!important}
 #d_info .ui.blue.segment{background:var(--s1)!important;border:1px solid var(--line)!important;border-radius:var(--r) var(--r) 0 0!important;box-shadow:none!important;color:var(--mut)!important;font-size:12px!important;padding:12px 16px!important;margin:0!important;gap:8px;flex-wrap:wrap}
 #d_info .ui.blue.segment b{color:var(--fg)}
 #d_info .ui.attached.message{background:var(--s1)!important;border:0!important;border-left:1px solid var(--line)!important;border-right:1px solid var(--line)!important;border-radius:0!important;margin:0!important;padding:8px 16px!important;color:var(--mut)!important;font-size:13px!important}
@@ -176,7 +182,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 @keyframes kp{50%{opacity:.25}}
 @keyframes krip{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.13);opacity:0}}
 @keyframes kbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
-@keyframes kglow{0%,100%{box-shadow:0 0 0 5px #0d1a12,0 0 0 8px #34d27a,0 0 22px 2px rgba(52,210,122,.3),0 10px 28px rgba(0,0,0,.6)}50%{box-shadow:0 0 0 5px #0d1a12,0 0 0 8px #34d27a,0 0 34px 8px rgba(52,210,122,.5),0 10px 28px rgba(0,0,0,.6)}}
+@keyframes kglow{0%,100%{box-shadow:0 0 0 3px #0d1a12,0 0 0 5px #34d27a,0 0 14px 1px rgba(52,210,122,.28),0 6px 16px rgba(0,0,0,.5)}50%{box-shadow:0 0 0 3px #0d1a12,0 0 0 5px #34d27a,0 0 24px 5px rgba(52,210,122,.5),0 6px 16px rgba(0,0,0,.5)}}
 #kgrs .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 #kgrs .chip-btn{background:#23252d;border-radius:12px;padding:10px 14px;font-weight:700;font-size:13px;display:inline-flex;gap:6px;align-items:center}
 #kgrs .chip-btn.acc{background:#d9f244;color:#141507}
@@ -188,11 +194,38 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs ul.owners.open{display:block}
 #kgrs ul.owners li{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;font-size:14px;border-top:1px solid rgba(255,255,255,.06)}
 #kgrs ul.owners li b{color:#d9f244;white-space:nowrap}
-@media (max-width:350px){#kgrs .t1{font-size:18px}#kgrs .go{width:86px;height:86px;font-size:17px;top:46px}#kgrs .row1,#kgrs .row2{padding-right:96px}#kgrs .pill{font-size:11px;padding:0 9px}}
+/* v0.6: kompaktan, suptilan panel */
+#kgrs .glass{background:rgba(20,21,26,.82);box-shadow:0 4px 18px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07)}
+#kgrs .sheet{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));border-radius:22px;padding:2px 14px 6px;max-height:46vh}
+#kgrs .handle{height:14px}
+#kgrs .handle:after{top:5px;width:32px;height:3px;margin-left:-16px;background:rgba(255,255,255,.18)}
+#kgrs .row1{padding:0 96px 0 2px;min-height:0;gap:0}
+#kgrs .t1{font-size:17px;font-weight:700;letter-spacing:0}
+#kgrs .t2{font-size:12px;margin-top:1px}
+#kgrs .chips{gap:5px;margin-top:6px}
+#kgrs .chips span{padding:3px 9px;font-size:11px;font-weight:600;background:rgba(255,255,255,.07)}
+#kgrs .chips span.a{background:rgba(217,242,68,.12)}
+#kgrs .divider{margin:8px -14px 6px;background:rgba(255,255,255,.07)}
+#kgrs .row2{padding-right:96px;min-height:0}
+#kgrs .st{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px}
+#kgrs .s1{font-size:14px;font-weight:700}
+#kgrs .s2{font-size:12px;margin:0}
+#kgrs .actions{margin-top:6px;flex-basis:100%}
+#kgrs .st.off .actions{margin-top:0}
+#kgrs .chip-btn{padding:7px 11px;font-size:12px;border-radius:10px;background:rgba(255,255,255,.07);font-weight:600}
+#kgrs .chip-btn.acc{background:#d9f244;color:#141507}
+#kgrs .owners-toggle{padding:8px 2px;font-size:13px;font-weight:600;border-top:1px solid rgba(255,255,255,.07)}
+#kgrs .go{width:76px;height:76px;top:36px;right:12px;font-size:15px;gap:5px;box-shadow:0 0 0 3px #121317,0 0 0 4.5px #2e3039,0 6px 16px rgba(0,0,0,.5)}
+#kgrs .go i{width:12px;height:12px}
+#kgrs .go.run{box-shadow:0 0 0 3px #0d1a12,0 0 0 5px #34d27a,0 0 18px 2px rgba(52,210,122,.35),0 6px 16px rgba(0,0,0,.5)}
+#kgrs .go.run i{width:11px;height:11px}
+#kgrs .go:after{inset:-5px}
+@media (max-width:350px){#kgrs .t1{font-size:18px}#kgrs .go{width:68px;height:68px;font-size:14px;top:38px}#kgrs .row1,#kgrs .row2{padding-right:86px}#kgrs .pill{font-size:11px;padding:0 9px}}
 @media (max-height:700px) and (orientation:portrait){#kgrs .sheet{max-height:50vh}}
 @media (orientation:landscape) and (max-height:520px){#kgrs .sheet{left:auto;width:min(460px,58vw);max-height:calc(100vh - 78px - env(safe-area-inset-bottom))}#kgrs .hint{left:auto;width:min(460px,58vw)}#kgrs .rail{right:auto;left:10px;top:calc(56px + env(safe-area-inset-top))}#kgrs .layers{right:auto;left:58px;top:calc(56px + env(safe-area-inset-top))}}
 #kgrs .none{color:#9aa0ac;font-size:13px;padding:6px 2px}
 #kgrsmap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147482000;background:#0c0d10;overflow:hidden}
+body .kgrs-force-hide{display:none!important}
 #kgrsmap .ol-rotate,#kgrsmap .ol-attribution,#kgrsmap .ol-zoom{display:none!important}
 #kgrs .rail{position:absolute;right:10px;top:calc(60px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:8px}
 #kgrs .rail .rb{font-size:20px;font-weight:600}
@@ -228,7 +261,39 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     }
     addStyle('kgrs-theme', CSS);
   }
+  function groupResults(d) {
+    const kids = [...d.children];
+    if (!kids.length || kids.every((e) => e.tagName === 'SECTION')) return;
+    const isP = (e) => e && e.matches && e.matches('.ui.attached.message') && /^Парцела$/.test((e.querySelector('.header') || {}).textContent ? e.querySelector('.header').textContent.trim() : '');
+    const groups = []; let cur = null;
+    kids.forEach((e, i) => {
+      if (e.tagName === 'SECTION') { cur = null; return; }
+      if (isP(e) || (e.tagName === 'SPAN' && isP(kids[i + 1]))) { cur = document.createElement('section'); cur.className = 'kgrs-card'; groups.push(cur); }
+      else if (!cur) { cur = document.createElement('section'); cur.className = 'kgrs-head'; groups.push(cur); }
+      cur.appendChild(e);
+    });
+    groups.forEach((g) => d.appendChild(g));
+  }
+  function dedupeResults() {
+    // sajt ponekad dodaje novi blok rezultata umjesto da zamijeni stari: prikazujemo samo posljednji
+    const infos = [...document.querySelectorAll('div[id="d_info"]')];
+    infos.forEach((e, i) => e.classList.toggle('kgrs-dup', i < infos.length - 1));
+    const d = infos[infos.length - 1]; if (!d) return;
+    groupResults(d);
+    // iste parcele (isti jumpTo poziv) prikazujemo jednom
+    const seen = new Set();
+    d.querySelectorAll('table[id^=parc_] tr').forEach((tr) => {
+      const b = tr.querySelector('button[onclick*="jumpTo"]'); if (!b) return;
+      const k = b.getAttribute('onclick');
+      tr.classList.toggle('kgrs-dup', seen.has(k)); seen.add(k);
+    });
+    d.querySelectorAll('section.kgrs-card').forEach((sec) => {
+      const rows = sec.querySelectorAll('table[id^=parc_] tbody tr');
+      sec.classList.toggle('kgrs-dup', rows.length > 0 && [...rows].every((tr) => tr.classList.contains('kgrs-dup')));
+    });
+  }
   function tidy() {
+    try { dedupeResults(); } catch (e) { /* nije kriticno */ }
     document.querySelectorAll('#d_all p, #d_all div, #d_all span').forEach((e) => {
       if (e.children.length <= 1 && e.textContent.length < 140 && /^\s*Републичка управа за геодетске/.test(e.textContent) && !e.querySelector('input,button,select')) e.style.setProperty('display', 'none', 'important');
     });
@@ -337,7 +402,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
   document.addEventListener('click', (e) => {
     const t = e.target;
     const b = t.closest && t.closest('button[onclick*="jumpTo"]');
-    if (b) { try { captureParcel(b); } catch (err) { /* nije kriticno */ } mapRequested = Date.now(); return; }
+    if (b) { unforce(); try { captureParcel(b); } catch (err) { /* nije kriticno */ } mapRequested = Date.now(); return; }
     const c = t.closest && t.closest('.button, button');
     if (c && /^Затвори$/.test(c.textContent.trim())) mapRequested = 0;
   }, true);
@@ -682,12 +747,39 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     mounted.c.remove(); mounted = null; mapRequested = 0;
     refs.root.classList.remove('on');
   }
+  // vidljivost bez minimalne velicine (dugmad su mala)
+  function visibleEl(e) {
+    if (!e || !e.getClientRects().length) return false;
+    for (let n = e; n && n.nodeType === 1; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) return false;
+    }
+    return true;
+  }
+  let forcedHidden = [];
+  function unforce() { forcedHidden.forEach((e) => e.classList.remove('kgrs-force-hide')); forcedHidden = []; }
   function closeMap() {
+    const t = mounted && mounted.t;
+    const modal = t && (t.closest('.ui.modal') || t.closest('[class*=modal]'));
     unmountMap();
-    // njihov modal zatvara njihov kod (dugme „Затвори“)
-    const btns = [...document.querySelectorAll('.ui.button, button, .button')].filter((x) => /^Затвори$/.test(x.textContent.trim()));
-    const b = btns.find(isShown) || btns[0];
+    // njihov modal zatvara njihov kod: trazimo dugme „Затвори“ unutar TOG modala (na stranici ih ima vise)
+    const all = [...document.querySelectorAll('.ui.button, button, .button')].filter((x) => /^Затвори$/.test(x.textContent.trim()));
+    const b = (modal && all.find((x) => modal.contains(x))) || all.find(visibleEl) || all[0];
     if (b) b.click();
+    setTimeout(() => ensureClosed(modal, t), 700);
+  }
+  // Ako se njihov modal ipak nije zatvorio (a ostavlja zatamnjenje koje blokira dodire), zatvaramo ga preko jQuery-ja, pa na silu.
+  function ensureClosed(modal, t) {
+    if (!t || !visibleEl(t)) return;
+    try { if (window.jQuery && modal) jQuery(modal).modal('hide'); } catch (e) { /* ok */ }
+    setTimeout(() => {
+      if (!visibleEl(t)) return;
+      for (let n = t; n && n !== document.body; n = n.parentElement) {
+        if (/(^|\s)(modal|modals|dimmer)(\s|$)/.test(n.className || '')) { n.classList.add('kgrs-force-hide'); forcedHidden.push(n); }
+      }
+      document.querySelectorAll('.ui.dimmer').forEach((dm) => { if (visibleEl(dm) && !dm.classList.contains('kgrs-force-hide')) { dm.classList.add('kgrs-force-hide'); forcedHidden.push(dm); } });
+      document.body.classList.remove('dimmed', 'dimmable', 'scrolling');
+    }, 800);
   }
   /* ------------------------------------------------------------------ */
   /* PODLOGE: Esri satelit / OpenStreetMap ispod njihovih slojeva         */
