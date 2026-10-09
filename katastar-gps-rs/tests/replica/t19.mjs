@@ -47,18 +47,15 @@ mode.v = 'gml';
 
 console.log('3) STRELICA PRAVCA');
 { const { ctx, p } = await fresh(); await p.click('#kgrs .go'); await p.waitForTimeout(1400);
-  const rot = () => p.evaluate(() => { const l = map.getLayers().getArray().find(l => l.getZIndex() === 9999); const f = l && l.getSource().getFeatures().find(f => f.get('k') === 'dir'); return f ? f.get('rot') : null; });
+  const rot = () => p.evaluate(() => { const el = document.querySelector('.kgrs-me-dir'); const m = el && /rotate\(([-\d.]+)deg\)/.exec(el.style.transform); return document.querySelector('.kgrs-me.has-dir') && m ? +m[1] : null; });
   note((await rot()) === null, 'bez orijentacije nema strelice');
-  const ori = async (alpha, beta = 0, gamma = 0) => { await p.evaluate(([a, b, g]) => { const e = new Event('deviceorientationabsolute'); Object.assign(e, { alpha: a, beta: b, gamma: g, absolute: true }); window.dispatchEvent(e); }, [alpha, beta, gamma]); await p.waitForTimeout(160); };
-  for (let i = 0; i < 12; i++) await ori(90);    // ravan telefon, alpha=90 -> okrenut prema 270 (zapad)
-  const r1 = await rot(); note(r1 !== null && Math.abs(angd(r1, 270)) < 12, `kompas alpha=90 -> kurs ~270 (dobijeno ${r1 && r1.toFixed(0)})`);
-  for (let i = 0; i < 14; i++) await ori(270);   // alpha=270 -> istok (90)
-  const r2 = await rot(); note(r2 !== null && Math.abs(angd(r2, 90)) < 12, `kompas alpha=270 -> kurs ~90 (dobijeno ${r2 && r2.toFixed(0)})`);
-  await p.screenshot({ path: 'arrow.png', clip: { x: 80, y: 250, width: 230, height: 300 } });
-  // kretanje: ~25 m prema sjeveru -> kurs ~0; zatim istok -> ~90
-  for (let i = 0; i < 5; i++) { await ctx.setGeolocation({ latitude: 44.73045 + 0.00005 * (i + 1), longitude: 18.0807, accuracy: 3 }); await p.waitForTimeout(1200); }
-  const r3 = await rot(); note(r3 !== null && Math.abs(angd(r3, 0)) < 25, `kretanje prema sjeveru -> kurs ~0 (dobijeno ${r3 && r3.toFixed(0)})`);
-  await p.click('#kgrs .go'); await p.waitForTimeout(400); note((await rot()) === null, 'stop uklanja strelicu'); await ctx.close();
+  const feed = (alpha) => p.evaluate((a) => { clearInterval(window.__f); window.__f = setInterval(() => { const e = new Event('deviceorientationabsolute'); Object.assign(e, { alpha: a, beta: 0, gamma: 0, absolute: true }); window.dispatchEvent(e); }, 33); }, alpha);
+  await feed(90); await p.waitForTimeout(1200); const r1 = await rot(); note(r1 !== null && Math.abs(angd(r1, 270)) < 5, `kompas alpha=90 -> kurs ~270 (dobijeno ${r1 && r1.toFixed(0)})`);
+  await feed(270); await p.waitForTimeout(1200); const r2 = await rot(); note(r2 !== null && Math.abs(angd(r2, 90)) < 5, `kompas alpha=270 -> kurs ~90 (dobijeno ${r2 && r2.toFixed(0)})`);
+  await p.evaluate(() => clearInterval(window.__f));
+  for (let i = 0; i < 6; i++) { await ctx.setGeolocation({ latitude: 44.73045 + 0.00005 * (i + 1), longitude: 18.0807, accuracy: 3 }); await p.waitForTimeout(1100); }
+  const r3 = await rot(); note(r3 !== null && Math.abs(angd(r3, 0)) < 20, `kretanje prema sjeveru -> kurs ~0 (dobijeno ${r3 && r3.toFixed(0)})`);
+  await p.click('#kgrs .go'); await p.waitForTimeout(400); note(await p.evaluate(() => !document.querySelector('.kgrs-me')), 'stop uklanja tacku i strelicu'); await ctx.close();
   function angd(a, b) { return ((a - b + 540) % 360) - 180; } }
 
 console.log('4) DOKTOR SKROLA');

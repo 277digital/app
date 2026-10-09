@@ -26,6 +26,12 @@ Mobilna web aplikacija (PWA) za hodanje po placu uz GPS: prikaz parcela na satel
 - **Zamrzavanje skrola:** uzrok je bio providni `position:fixed` sloj (dimmer) unutar same stranice, koji ne propušta skrol roditelju. Zaštita ga traži i unutar stranice, a na mjestu dodira i svaki mali sloj iznad nje.
 - Dugme Kreni/Stop: staklasti disk sa kružnim lukom, ▶ / spinner / ■ i zeleni puls.
 
+## Živa tačka i filter (v1.0)
+- Zelena tačka je DOM overlay (ne vektor): animira se na 60 fps nezavisno od GPS-a, klizi između očitavanja (predviđanje po brzini), a mapa se pomjera tek kad tačka ode ~70 px od centra. Petlja staje kad sve konvergira.
+- Filter pozicije sa brzinom (konstantna brzina po osi): kašnjenje pri hodanju ~0.4 m (ranije ~5 m).
+- Kompas: zbir vektora gornje ivice i zadnje kamere (nema skoka pri nagibu), glađenje vremenskom konstantom (brzo pri okretu, jako pri šumu), korekcija za rotaciju ekrana.
+- Podaci parcele na dodir: ako njihov sloj nije standardni WMS izvor, GetFeatureInfo se sastavlja iz adrese pločica (isti `authkey`, BBOX oko dodira); dijagnostika u kartici maskira ključ.
+
 ## Preciznost (v0.3)
 - Filter pozicije prilagođen brzini (mirovanje = jače glađenje, hodanje = brza reakcija) i odbacivanje naglih skokova.
 - Kalibracija sa više tačaka (težinski prosjek), upozorenje ako se tačke ne slažu, ističe nakon 12 h.

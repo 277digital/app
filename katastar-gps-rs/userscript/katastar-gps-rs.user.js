@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.9.0
+// @version      1.0.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -192,6 +192,15 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07);font-size:13px;color:#9aa0ac}
 #kgrs .kv b{color:#f2f3f5;text-align:right;overflow-wrap:anywhere;font-weight:600}
 #kgrs .detail .chip-btn.acc{margin-top:8px;width:100%;justify-content:center}
+/* ziva tacka (overlay na mapi) */
+.kgrs-me{position:relative;width:0;height:0;pointer-events:none}
+.kgrs-me-acc{position:absolute;left:-10px;top:-10px;width:20px;height:20px;box-sizing:border-box;border-radius:50%;background:rgba(52,210,122,.10);border:1.25px solid rgba(52,210,122,.5)}
+.kgrs-me-dot{position:absolute;left:-8px;top:-8px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;border:2.5px solid #fff;
+  background:radial-gradient(circle at 35% 30%,#b4ffd3,#34d27a 58%,#1da95c);box-shadow:0 0 0 1px rgba(0,0,0,.16),0 2px 7px rgba(0,0,0,.38)}
+.kgrs-me-pulse{position:absolute;left:-9px;top:-9px;width:18px;height:18px;border-radius:50%;background:rgba(52,210,122,.38);animation:kmepulse 2.6s ease-out infinite}
+.kgrs-me-dir{position:absolute;left:-60px;top:-60px;width:120px;height:120px;opacity:0;transition:opacity .3s;will-change:transform;pointer-events:none}
+.kgrs-me.has-dir .kgrs-me-dir{opacity:1}
+@keyframes kmepulse{0%{transform:scale(.7);opacity:.85}65%{transform:scale(3.1);opacity:0}100%{transform:scale(3.1);opacity:0}}
 #kgrs-toast{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483200;padding:12px 14px;border-radius:16px;background:rgba(20,21,26,.94);color:#f2f3f5;font:13px/1.4 system-ui,-apple-system,Roboto,sans-serif;border:1px solid rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.5);display:none}
 #kgrs-toast.on{display:block}
 #kgrs-toast b{color:#d9f244}
@@ -250,7 +259,6 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .none{color:#9aa0ac;font-size:13px;padding:6px 2px}
 #kgrsmap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147482000;background:#0c0d10;overflow:hidden}
 body .kgrs-force-hide{display:none!important}
-#kgrsmap.kgrs-ovl-hidden .ol-overlay-container{visibility:hidden!important}
 #kgrsmap .ol-rotate,#kgrsmap .ol-attribution,#kgrsmap .ol-zoom{display:none!important}
 #kgrs .rail{position:absolute;right:10px;top:calc(60px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:8px}
 #kgrs .rail .rb{font-size:20px;font-weight:600}
@@ -508,7 +516,7 @@ body .kgrs-force-hide{display:none!important}
   const CAL_KEY = 'kgrs.cal.v1';
   let watchId = null, wakeLock = null, follow = true, calMode = false;
   let gpsSource = null, gpsLayer = null;
-  let heading = null, compassH = null, moveH = null, moveT = 0, trail = [], tapCoord = null, tapFeat = null, dirFeat = null, lastOri = 0;
+  let compassH = null, compassVec = null, moveH = null, moveT = 0, trail = [], tapCoord = null, tapFeat = null, lastOri = 0, hiddenOvl = [];
   let raw = null;        // filtrirana pozicija bez kalibracije {x,y,acc,t}
   let cal = null;        // {dx,dy,t}
   try { cal = JSON.parse(localStorage.getItem(CAL_KEY)); } catch (e) { cal = null; }
@@ -519,55 +527,108 @@ body .kgrs-force-hide{display:none!important}
     cal.dx = cal.pts.reduce((a, q) => a + q.dx * q.w, 0) / W; cal.dy = cal.pts.reduce((a, q) => a + q.dy * q.w, 0) / W;
     return Math.max(...cal.pts.map((q) => Math.hypot(q.dx - cal.dx, q.dy - cal.dy)));   // rasipanje
   }
-  const KF = { x: null, y: null, P: 0, t: 0 };
+  const KF = { x: null, y: null, vx: 0, vy: 0, P: 0, t: 0, X: null, Y: null };   // X, Y: stanje po osi {p, v, a, b, c} (a=var(p), b=cov, c=var(v))
 
   let outl = 0;
-  function kalman(x, y, acc, t, speed) {
+  const KQ = 0.5;                                  // sum ubrzanja (m²/s³): manje = glatko, vise = brza reakcija na skretanje/zaustavljanje
+  function kfNew(z, R) { return { p: z, v: 0, a: R, b: 0, c: 4 }; }
+  function kfPredict(s, dt, q) { s.p += s.v * dt; const a = s.a + 2 * dt * s.b + dt * dt * s.c + q * dt * dt * dt / 3, b = s.b + dt * s.c + q * dt * dt / 2; s.a = a; s.b = b; s.c += q * dt; }
+  function kfUpdate(s, z, R) { const S = s.a + R, kp = s.a / S, kv = s.b / S, y = z - s.p; s.p += kp * y; s.v += kv * y; s.c -= kv * s.b; s.b *= 1 - kp; s.a *= 1 - kp; }
+  /** Filter pozicije sa brzinom: nema kasnjenja pri hodanju (za razliku od modela "stojim"), a u mirovanju glada sum. */
+  function kalman(x, y, acc, t) {
     const R = Math.max(acc, 1) ** 2;
-    if (KF.x === null || t - KF.t > 15000) { KF.x = x; KF.y = y; KF.P = R; KF.t = t; outl = 0; return; }
-    const dt = Math.max((t - KF.t) / 1000, 0.05);
-    const d = Math.hypot(x - KF.x, y - KF.y);
-    // brzina: iz uredjaja ako postoji, inace iz pomaka; mirovanje => jace glađenje, hodanje => brza reakcija
-    const v = typeof speed === 'number' && speed >= 0 ? speed : Math.min(d / dt, 3);
-    KF.P += dt * (0.04 + 1.2 * v * v);
-    let Reff = R;
-    if (d > 5 && d > 3 * Math.sqrt(KF.P + R)) {        // nagli skok: vjerovatno loše mjerenje
-      if (++outl < 3) Reff = R * 25; else { outl = 0; KF.P = R; }   // ako se ponavlja, prihvati kao pravo kretanje
-    } else outl = 0;
-    const g = KF.P / (KF.P + Reff);
-    KF.x += g * (x - KF.x); KF.y += g * (y - KF.y); KF.P *= 1 - g; KF.t = t;
+    if (KF.X === null || t - KF.t > 15000) { KF.X = kfNew(x, R); KF.Y = kfNew(y, R); KF.t = t; outl = 0; }
+    else {
+      const dt = Math.min(Math.max((t - KF.t) / 1000, 0.05), 10);
+      kfPredict(KF.X, dt, KQ); kfPredict(KF.Y, dt, KQ);
+      const ix = x - KF.X.p, iy = y - KF.Y.p, d = Math.hypot(ix, iy), S = (KF.X.a + KF.Y.a) / 2 + R;
+      let Reff = R, fresh = false;
+      if (d > 8 && d > 4 * Math.sqrt(S)) {                                        // nagli skok: vjerovatno lose mjerenje
+        if (++outl < 2) Reff = R * 25;                                             // prvo ga gotovo ignorisi,
+        else { outl = 0; KF.X = kfNew(x, R); KF.Y = kfNew(y, R); fresh = true; }   // ako se ponovi, prihvati kao pravo kretanje
+      } else outl = 0;
+      if (!fresh) { kfUpdate(KF.X, x, Reff); kfUpdate(KF.Y, y, Reff); }
+      KF.t = t;
+    }
+    KF.x = KF.X.p; KF.y = KF.Y.p; KF.vx = KF.X.v; KF.vy = KF.Y.v; KF.P = (KF.X.a + KF.Y.a) / 2;
   }
   const calibrated = () => (cal ? [raw.x + cal.dx, raw.y + cal.dy] : [raw.x, raw.y]);
 
-  // konus + strelica koja pokazuje u kom smjeru je korisnik okrenut (rotira se po kursu)
-  const DIR_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><defs><radialGradient id="g" cx="60" cy="60" r="58" gradientUnits="userSpaceOnUse"><stop offset="0.15" stop-color="#19b5ff" stop-opacity="0.8"/><stop offset="1" stop-color="#19b5ff" stop-opacity="0"/></radialGradient></defs><path d="M60 60 L30 6 A62 62 0 0 1 90 6 Z" fill="url(#g)"/><path d="M60 12 L69 34 L60 29 L51 34 Z" fill="#fff" stroke="#19b5ff" stroke-width="2" stroke-linejoin="round"/></svg>');
-  function ensureGpsLayer(map) {
+  /* ---- ZIVA TACKA: zeleni DOM element (overlay) + animacija na 60 fps, nezavisno od ucestalosti GPS-a ---- */
+  const ME_HTML = '<div class="kgrs-me-acc"></div><div class="kgrs-me-pulse"></div><div class="kgrs-me-dir"><svg viewBox="0 0 120 120" width="120" height="120"><defs><radialGradient id="kgrs-cone" cx="60" cy="60" r="60" gradientUnits="userSpaceOnUse"><stop offset="0.1" stop-color="#34d27a" stop-opacity="0.5"/><stop offset="1" stop-color="#34d27a" stop-opacity="0"/></radialGradient></defs><path d="M60 60 L35 6 A62 62 0 0 1 85 6 Z" fill="url(#kgrs-cone)"/><path d="M60 15 L66.5 31 L60 27 L53.5 31 Z" fill="#fff" stroke="#34d27a" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="kgrs-me-dot"></div>';
+  let meOv = null, meEl = null, meDir = null, meAcc = null, resKey = null;
+  const cur = { x: 0, y: 0, ok: false };
+  let tgt = null, hCur = null, hTgt = null, raf = 0, lastFrame = 0, lastCenter = 0;
+  const angDiff = (a, b) => ((a - b + 540) % 360) - 180;
+
+  function ensureGpsLayer(map) {            // vektorski sloj samo za krug tacnosti i oznaku dodira
     if (gpsLayer && allLayers(map.getLayers(), []).includes(gpsLayer)) return;
     gpsSource = new ol.source.Vector();
     gpsLayer = new ol.layer.Vector({
       source: gpsSource, zIndex: 9999,
       style: (f) => {
-        const k = f.get('k');
-        const dot = () => new ol.style.Style({ image: new ol.style.Circle({ radius: 8.5, fill: new ol.style.Fill({ color: '#19b5ff' }), stroke: new ol.style.Stroke({ color: '#fff', width: 3.5 }) }) });
         try {
-          if (k === 'acc') return new ol.style.Style({ fill: new ol.style.Fill({ color: 'rgba(25,181,255,.14)' }), stroke: new ol.style.Stroke({ color: 'rgba(25,181,255,.75)', width: 1.5 }) });
-          if (k === 'dir') {
-            const rad = (f.get('rot') || 0) * Math.PI / 180;
-            if (typeof ol.style.Icon === 'function') return new ol.style.Style({ image: new ol.style.Icon({ src: DIR_SVG, rotation: rad, rotateWithView: false, anchor: [0.5, 0.5], scale: 0.85 }) });
-            if (typeof ol.style.RegularShape === 'function')      // rezerva: trougao ispred tacke
-              return new ol.style.Style({ image: new ol.style.RegularShape({ points: 3, radius: 9, rotation: rad, rotateWithView: false, displacement: [Math.sin(rad) * 27, Math.cos(rad) * 27], fill: new ol.style.Fill({ color: '#fff' }), stroke: new ol.style.Stroke({ color: '#19b5ff', width: 2 }) }) });
-            return new ol.style.Style({});
-          }
+          const k = f.get('k');
+          if (k === 'acc') return new ol.style.Style({ fill: new ol.style.Fill({ color: 'rgba(52,210,122,.10)' }), stroke: new ol.style.Stroke({ color: 'rgba(52,210,122,.55)', width: 1.25 }) });
           if (k === 'tap') return new ol.style.Style({ image: new ol.style.Circle({ radius: 10, stroke: new ol.style.Stroke({ color: '#d9f244', width: 3 }), fill: new ol.style.Fill({ color: 'rgba(217,242,68,.18)' }) }) });
-          if (k === 'halo') return new ol.style.Style({ image: new ol.style.Circle({ radius: 17, fill: new ol.style.Fill({ color: 'rgba(25,181,255,.28)' }) }) });
-          return dot();
-        } catch (e) { return k === 'dot' ? dot() : new ol.style.Style({}); }     // greska u stilu nikad ne smije ugasiti tacku
+        } catch (e) { /* ok */ }
+        return new ol.style.Style({});
       },
     });
     map.addLayer(gpsLayer);
     map.on('pointerdrag', onDrag);
   }
   function onDrag() { if (follow && watchId !== null) { follow = false; refs.recenter.style.opacity = '1'; } }
+
+  function ensureMe(map) {
+    if (meOv && map.getOverlays().getArray().includes(meOv)) return;
+    meEl = document.createElement('div'); meEl.className = 'kgrs-me'; meEl.innerHTML = ME_HTML; meDir = meEl.querySelector('.kgrs-me-dir'); meAcc = meEl.querySelector('.kgrs-me-acc');
+    resKey = map.getView().on('change:resolution', updateAcc);
+    meOv = new ol.Overlay({ element: meEl, positioning: 'center-center', stopEvent: false });
+    map.addOverlay(meOv);
+  }
+  function destroyMe(map) {
+    if (raf) cancelAnimationFrame(raf); raf = 0;
+    if (meOv && map) { try { map.removeOverlay(meOv); } catch (e) { /* ok */ } }
+    if (resKey && map) { try { map.getView().un('change:resolution', updateAcc); } catch (e) { /* ok */ } } resKey = null;
+    meOv = meEl = meDir = meAcc = null; cur.ok = false; tgt = null; hCur = null; hTgt = null;
+  }
+  /** Krug tacnosti je DOM element velicine iz metara (r / rezolucija): pomjera se zajedno sa tackom, bez ponovnog crtanja mape. */
+  function updateAcc() {
+    const map = getMap(); if (!meAcc || !raw || !map) return;
+    const res = map.getView().getResolution(); if (!res) return;
+    const d = Math.max(2 * Math.max(raw.acc, 0.5) / res, 6);
+    meAcc.style.width = meAcc.style.height = d.toFixed(1) + 'px'; meAcc.style.left = meAcc.style.top = (-d / 2).toFixed(1) + 'px';
+  }
+  function kick() { if (!raf) { lastFrame = 0; raf = requestAnimationFrame(frame); } }
+  /** Petlja crtanja: tacka klize ka cilju, pravac se glatko okrece; staje cim sve konvergira (stedi bateriju). */
+  function frame(t) {
+    raf = 0; if (!meOv || !tgt) return;
+    const dt = lastFrame ? Math.min(100, t - lastFrame) : 16; lastFrame = t;
+    let busy = false;
+    if (raw) { tgt = targetNow(); if (Math.hypot(raw.vx || 0, raw.vy || 0) > 0.4 && Date.now() - raw.t < 1700) busy = true; }
+    const dx = tgt[0] - cur.x, dy = tgt[1] - cur.y, d = Math.hypot(dx, dy);
+    if (d > 60) { cur.x = tgt[0]; cur.y = tgt[1]; }
+    else if (d > 0.01) { const k = 1 - Math.exp(-dt / 110); cur.x += dx * k; cur.y += dy * k; busy = true; }
+    meOv.setPosition([cur.x, cur.y]);
+    if (hTgt !== null && meDir) {
+      if (hCur === null) hCur = hTgt;
+      else { const df = angDiff(hTgt, hCur); if (Math.abs(df) > 0.08) { hCur = (hCur + df * (1 - Math.exp(-dt / 65)) + 360) % 360; busy = true; } else hCur = hTgt; }
+      meDir.style.transform = 'rotate(' + hCur.toFixed(2) + 'deg)'; meEl.classList.add('has-dir');
+    }
+    const map = getMap();
+    if (follow && map && t - lastCenter >= 200) {                                   // mapu ne crtamo svaki kadar: pomjeramo je mekom animacijom tek kad tacka ode ~70 px od centra
+      const v = map.getView(), px = map.getPixelFromCoordinate([cur.x, cur.y]), sz = map.getSize();
+      if (px && sz && !v.getAnimating() && Math.hypot(px[0] - sz[0] / 2, px[1] - sz[1] / 2) > 70) { lastCenter = t; v.animate({ center: [cur.x, cur.y], duration: 450 }); }
+    }
+    if (busy) raf = requestAnimationFrame(frame);
+  }
+  /** Cilj tacke u ovom trenutku: posljednja pozicija + brzina * proteklo vrijeme (do 1.6 s), pa tacka klizi i izmedju GPS ocitavanja. */
+  function targetNow() {
+    const c = calibrated(), age = Math.min(1.6, (Date.now() - raw.t) / 1000), sp = Math.hypot(raw.vx || 0, raw.vy || 0);
+    return sp > 0.4 ? [c[0] + raw.vx * age, c[1] + raw.vy * age] : c;
+  }
+  function aim(deg) { hTgt = ((deg % 360) + 360) % 360; kick(); }
 
   function onPos(p) {
     const map = getMap();
@@ -577,31 +638,23 @@ body .kgrs-force-hide{display:none!important}
     catch (e) { return setPill('bad', 'Greška koordinata', e.message); }
     const acc = p.coords.accuracy || 99;
     if (acc > 60 && raw) return;                  // odbaci jako loša mjerenja kad već imamo poziciju
-    kalman(xy[0], xy[1], acc, p.timestamp || Date.now(), p.coords.speed);
-    raw = { x: KF.x, y: KF.y, acc, t: Date.now() };
-    // kurs: iz kretanja (ako se krecemo), inace iz GPS-a (brzina > 0.8 m/s), a kompas popunjava mirovanje
+    kalman(xy[0], xy[1], acc, Date.now());
+    raw = { x: KF.x, y: KF.y, vx: KF.vx, vy: KF.vy, acc, t: Date.now() };
+    // kurs: iz kretanja (ako se krecemo), inace iz GPS-a (brzina > 0.8 m/s); kad stojimo vlada kompas
     trail.push({ x: raw.x, y: raw.y, t: raw.t }); while (trail.length > 1 && raw.t - trail[0].t > 8000) trail.shift();
     const o = trail[0], mdx = raw.x - o.x, mdy = raw.y - o.y;
-    if (Math.hypot(mdx, mdy) >= 4) { moveH = (Math.atan2(mdx, mdy) * 180 / Math.PI + 360) % 360; moveT = raw.t; setHeading(moveH, false, 0.7); }
-    else if (typeof p.coords.heading === 'number' && isFinite(p.coords.heading) && p.coords.speed > 0.8) { moveH = p.coords.heading; moveT = raw.t; setHeading(moveH, false, 0.7); }
-    else if (compassH !== null) setHeading(compassH, false);
+    if (Math.hypot(mdx, mdy) >= 3) { moveH = (Math.atan2(mdx, mdy) * 180 / Math.PI + 360) % 360; moveT = raw.t; if (hTgt === null || Math.abs(angDiff(moveH, hTgt)) > 2) aim(moveH); }
+    else if (typeof p.coords.heading === 'number' && isFinite(p.coords.heading) && p.coords.speed > 0.8) { moveH = p.coords.heading; moveT = raw.t; if (hTgt === null || Math.abs(angDiff(moveH, hTgt)) > 2) aim(moveH); }
     drawGps(map);
     refreshStatus();
   }
 
   function drawGps(map) {
-    ensureGpsLayer(map);
-    const c = calibrated();
-    gpsSource.clear(); tapFeat = null; dirFeat = null;
-    const a = new ol.Feature(new ol.geom.Circle(c, Math.max(raw.acc, 0.5))); a.set('k', 'acc');
-    const feats = [a];
-    if (heading !== null) { dirFeat = new ol.Feature(new ol.geom.Point(c)); dirFeat.set('k', 'dir'); dirFeat.set('rot', heading); feats.push(dirFeat); }
-    const h = new ol.Feature(new ol.geom.Point(c)); h.set('k', 'halo');
-    const d = new ol.Feature(new ol.geom.Point(c)); d.set('k', 'dot');
-    feats.push(h, d);
-    gpsSource.addFeatures(feats);
-    if (tapCoord) addTap();
-    if (follow) map.getView().animate({ center: c, duration: 250 });
+    ensureGpsLayer(map); ensureMe(map);
+    const c = raw ? targetNow() : calibrated(); tgt = c;
+    updateAcc();
+    if (!cur.ok) { cur.x = c[0]; cur.y = c[1]; cur.ok = true; meOv.setPosition(c); if (follow) map.getView().setCenter(c); }
+    kick();
   }
   function addTap() {
     const map = getMap(); if (!map || !tapCoord) return;
@@ -611,32 +664,30 @@ body .kgrs-force-hide{display:none!important}
   }
   function clearTap() { tapCoord = null; if (tapFeat && gpsSource) { try { gpsSource.removeFeature(tapFeat); } catch (e) { /* ok */ } } tapFeat = null; }
 
-  /* ---- kurs (smjer u kojem smo okrenuti) ---- */
-  const angDiff = (a, b) => ((a - b + 540) % 360) - 180;
-  function setHeading(hd, draw, k) {
-    if (hd === null || !isFinite(hd)) return;
-    hd = ((hd % 360) + 360) % 360;
-    heading = heading === null ? hd : (heading + (k || 0.3) * angDiff(hd, heading) + 360) % 360;   // glađenje po krugu
-    if (dirFeat) { dirFeat.set('rot', heading); dirFeat.changed(); }
-    else if (draw !== false && raw) drawGps(getMap());
-  }
-  // kompas iz senzora orijentacije: kurs gornje ivice telefona (kad je ravan) ili zadnje kamere (kad je uspravan)
-  function compassHeading(alpha, beta, gamma) {
+  /* ---- kompas: rotaciona matrica, kontinualno mjesanje gornje ivice i zadnje kamere (bez prekidaca), glađenje po vektoru ---- */
+  function compassVector(alpha, beta, gamma) {
     const d = Math.PI / 180, z = alpha * d, x = beta * d, y = gamma * d;
     const cZ = Math.cos(z), sZ = Math.sin(z), cX = Math.cos(x), sX = Math.sin(x), cY = Math.cos(y), sY = Math.sin(y);
-    // stupci rotacione matrice R = Rz(alpha) * Rx(beta) * Ry(gamma): ose uredjaja u svijetu (x istok, y sjever, z gore)
-    const topE = -cX * sZ, topN = cX * cZ;                                           // y-osa (gornja ivica)
+    const topE = -cX * sZ, topN = cX * cZ;                                           // y-osa uredjaja (gornja ivica), horizontalna projekcija
     const backE = -(cZ * sY + cY * sZ * sX), backN = -(sZ * sY - cZ * cY * sX);      // -z osa (zadnja kamera)
-    const useTop = Math.hypot(topE, topN) >= Math.hypot(backE, backN);
-    const e = useTop ? topE : backE, n = useTop ? topN : backN;
-    return (Math.atan2(e, n) * 180 / Math.PI + 360) % 360;
+    return [topE + backE, topN + backN];                                              // oba pokazuju isti kurs; zbir nema "skoka" pri nagibu
   }
+  const screenAngle = () => ((screen.orientation && screen.orientation.angle) || window.orientation || 0);
   function onOrient(e) {
     if (e.alpha === null || e.alpha === undefined) return;
     if (e.type === 'deviceorientation' && !e.absolute) return;      // relativni alpha nije sjever
-    const now = Date.now(); if (now - lastOri < 120) return; lastOri = now;
-    compassH = compassHeading(e.alpha, e.beta || 0, e.gamma || 0);
-    if (now - moveT > 4000) setHeading(compassH);                     // dok hodamo vjerujemo kretanju
+    const now = performance.now(), dt = lastOri ? now - lastOri : 33; if (dt < 20) return; lastOri = now;
+    const v = compassVector(e.alpha, e.beta || 0, e.gamma || 0), m = Math.hypot(v[0], v[1]); if (m < 0.05) return;
+    const ux = v[0] / m, uy = v[1] / m;
+    if (!compassVec) compassVec = [ux, uy];
+    else {
+      // vremenska konstanta zavisi od velicine promjene: veliki okret = brzo (45 ms), sum = jako glađenje (160 ms); ne zavisi od ucestalosti senzora
+      const diff = Math.abs(angDiff(Math.atan2(ux, uy) * 180 / Math.PI, Math.atan2(compassVec[0], compassVec[1]) * 180 / Math.PI));
+      const a = 1 - Math.exp(-Math.min(dt, 200) / (diff > 35 ? 45 : diff > 12 ? 90 : 160));
+      compassVec = [compassVec[0] + (ux - compassVec[0]) * a, compassVec[1] + (uy - compassVec[1]) * a];
+    }
+    compassH = (Math.atan2(compassVec[0], compassVec[1]) * 180 / Math.PI + screenAngle() + 720) % 360;
+    if (Date.now() - moveT > 3000 && (hTgt === null || Math.abs(angDiff(compassH, hTgt)) > 1.2)) aim(compassH);   // mrtva zona od 1.2 stepena (bez treperenja)
   }
 
   function datumWarning(map) {
@@ -663,8 +714,8 @@ body .kgrs-force-hide{display:none!important}
   function stop() {
     if (watchId !== null) navigator.geolocation.clearWatch(watchId);
     window.removeEventListener('deviceorientationabsolute', onOrient, true); window.removeEventListener('deviceorientation', onOrient, true);
-    watchId = null; raw = null; KF.x = null; heading = null; compassH = null; moveH = null; trail = [];
-    if (gpsSource) { gpsSource.clear(); tapFeat = null; dirFeat = null; if (tapCoord) addTap(); }
+    watchId = null; raw = null; KF.X = null; KF.x = null; compassH = null; compassVec = null; moveH = null; moveT = 0; trail = [];
+    destroyMe(getMap());
     try { wakeLock && wakeLock.release(); } catch (e) { /* ok */ }
     refs.go.className = 'go'; refs.goT.textContent = 'Kreni';
     setPill('', 'GPS isključen', ''); refreshStatus();
@@ -815,9 +866,10 @@ body .kgrs-force-hide{display:none!important}
     if (!rings.length) { refs.detBtn.style.display = ''; refs.st.className = 'st'; refs.s1.textContent = 'Pozicija prikazana'; refs.s2.textContent = 'E ' + c[0].toFixed(1) + ' · N ' + c[1].toFixed(1); return; }
     const ring = rings[0], inside = inRing(c, ring), d = distRing(c, ring);
     const near = d < raw.acc;
-    refs.st.className = 'st ' + (near ? 'warn' : inside ? 'ok' : 'bad');
-    refs.s1.textContent = near ? 'Na međi parcele' : inside ? 'UNUTAR parcele' : 'IZVAN parcele';
-    refs.s2.textContent = d.toFixed(1) + ' m od najbliže međe' + (near ? ' (unutar greške GPS-a)' : '');
+    const far = d > 3000, dTxt = d >= 1000 ? (d / 1000).toFixed(1) + ' km' : d.toFixed(1) + ' m';
+    refs.st.className = 'st ' + (far ? '' : near ? 'warn' : inside ? 'ok' : 'bad');
+    refs.s1.textContent = far ? 'Daleko od tražene parcele' : near ? 'Na međi parcele' : inside ? 'UNUTAR parcele' : 'IZVAN parcele';
+    refs.s2.textContent = far ? dTxt + ' · dodirnite mapu za podatke o parceli' : dTxt + ' od najbliže međe' + (near ? ' (unutar greške GPS-a)' : '');
     refs.detBtn.style.display = (!inside || near) ? '' : 'none';   // stojimo na drugoj parceli (ili uz među)
   }
 
@@ -853,9 +905,10 @@ body .kgrs-force-hide{display:none!important}
     if (!mounted) return;
     const map = getMap();
     if (watchId !== null) stop();
-    refs.layers.classList.remove('on'); refs.detail.classList.remove('on'); clearTap(); qSeq++;
+    refs.layers.classList.remove('on'); refs.detail.classList.remove('on'); clearTap(); qSeq++; hiddenOvl.forEach((el) => { el.style.visibility = ''; }); hiddenOvl = [];
     if (map) {
       removeBases(map);
+      destroyMe(map);
       if (gpsLayer) { map.removeLayer(gpsLayer); gpsLayer = null; gpsSource = null; }
       map.un('pointerdrag', onDrag); map.un('singleclick', onMapTap);
       map.setTarget(mounted.orig); map.updateSize();
@@ -1075,7 +1128,7 @@ body .kgrs-force-hide{display:none!important}
     if (state === 'loading') d.append(h('div', 'none', 'Učitavam podatke sa sajta…'));
     else if (state === 'empty') {
       d.append(h('div', 'none', 'Sajt ne vraća podatke za ovu tačku. Dodirnite tačno na parcelu, ili pretražite broj parcele (tamo su i vlasnici).'));
-      if (data && data.diag && data.diag.length) d.append(h('div', 'diag', data.diag.slice(0, 9).join(' · ')));
+      if (data && data.diag && data.diag.length) d.append(h('div', 'diag', data.diag.slice(0, 12).join(' · ')));
     }
     else {
       data.pairs.forEach(([k, v]) => { const r = h('div', 'kv'); r.append(h('span', null, k), h('b', null, v)); d.append(r); });
@@ -1095,7 +1148,7 @@ body .kgrs-force-hide{display:none!important}
   function overlayTexts(map) {
     const out = [];
     (map.getOverlays ? map.getOverlays().getArray() : []).forEach((o) => {
-      const el = o.getElement && o.getElement(); if (!el || el.closest('#kgrs')) return;
+      const el = o.getElement && o.getElement(); if (!el || el.closest('#kgrs') || el === meEl) return;
       if (o.getPosition && !o.getPosition()) return;                                     // nije prikazan
       const t = ((el.innerText || el.textContent || '').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n')).trim();
       if (t && t.length < 700) out.push(t);
@@ -1125,23 +1178,62 @@ body .kgrs-force-hide{display:none!important}
       setTimeout(tick, 200);
     });
   }
+  /** WMS opis sloja: osnovna adresa + parametri (iz TileWMS/ImageWMS, ili iz probne adrese pločice kad je izvor prilagodjen). */
+  function wmsSpec(so, coord, res, proj) {
+    let base = null, entries = null;
+    try {
+      if (typeof so.getParams === 'function') { const pr = so.getParams(); entries = Object.keys(pr).map((k) => [k, pr[k]]); base = (so.getUrls && so.getUrls() && so.getUrls()[0]) || (so.getUrl && so.getUrl()) || null; }
+      if (!base && typeof so.getTileUrlFunction === 'function') {
+        const g = so.getTileGrid && so.getTileGrid();
+        if (g) { const tc = g.getTileCoordForCoordAndResolution(coord, res), u = so.getTileUrlFunction()(tc, 1, proj);
+          if (u) { const U = new URL(u, location.href); base = U.origin + U.pathname; entries = []; U.searchParams.forEach((v, k) => entries.push([k, v])); } }
+      }
+    } catch (e) { return null; }
+    if (!base || !entries) return null;
+    const P = {}; entries.forEach(([k, v]) => { P[k.toUpperCase()] = v; });
+    if (!P.LAYERS && !P.LAYER) return null;
+    return { base, entries, P };
+  }
+  function buildGfi(spec, coord, res, proj, fmt) {
+    const P = spec.P, ver = P.VERSION || '1.1.1', v13 = /^1\.3/.test(ver), half = 50, span = (half + 0.5) * res;
+    const q = new URLSearchParams();
+    spec.entries.forEach(([k, v]) => { if (!/^(BBOX|WIDTH|HEIGHT|REQUEST|FORMAT|TRANSPARENT|TILED|X|Y|I|J|INFO_FORMAT|FEATURE_COUNT|QUERY_LAYERS|SRS|CRS|FORMAT_OPTIONS|TILESORIGIN|MAP_RESOLUTION|DPI|SERVICE|VERSION|STYLES|LAYERS|LAYER)$/i.test(k)) q.set(k, v); });   // zadrzi i njihov authkey
+    const layers = P.LAYERS || P.LAYER;
+    q.set('SERVICE', 'WMS'); q.set('VERSION', ver); q.set('REQUEST', 'GetFeatureInfo'); q.set('LAYERS', layers); q.set('QUERY_LAYERS', layers); q.set('STYLES', P.STYLES || '');
+    q.set(v13 ? 'CRS' : 'SRS', P.SRS || P.CRS || proj.getCode());
+    q.set('BBOX', [coord[0] - span, coord[1] - span, coord[0] + span, coord[1] + span].join(','));
+    q.set('WIDTH', 2 * half + 1); q.set('HEIGHT', 2 * half + 1); q.set(v13 ? 'I' : 'X', half); q.set(v13 ? 'J' : 'Y', half);
+    q.set('INFO_FORMAT', fmt); q.set('FEATURE_COUNT', 5);
+    return spec.base + (spec.base.indexOf('?') < 0 ? '?' : '&') + q.toString();
+  }
+  const maskKey = (u) => u.replace(/((?:auth)?key|token|sid)=([^&]{0,4})[^&]*/ig, '$1=$2…');
   async function gfiQuery(map, coord, my, diag) {
     const v = map.getView(), res = v.getResolution(), proj = v.getProjection();
     const rank = (l) => { const t = l.get('title') || ''; return /^Парцеле/.test(t) ? 3 : /^Катастарска/.test(t) ? 2 : l.getVisible() ? 1 : 0; };
-    const layers = allLayers(map.getLayers(), []).filter((l) => { const so = l.getSource && l.getSource(); return so && typeof so.getFeatureInfoUrl === 'function'; }).sort((a, b) => rank(b) - rank(a)).slice(0, 2);
-    diag.push('WMS slojeva sa GetFeatureInfo: ' + layers.length);
+    const probes = []; let skipped = 0;
+    allLayers(map.getLayers(), []).sort((a, b) => rank(b) - rank(a)).forEach((l) => {
+      const so = l.getSource && l.getSource(); if (!so || l === gpsLayer || (bases && (l === bases.esri || l === bases.osm))) return;
+      const title = l.get('title') || '?';
+      if (typeof so.getFeatureInfoUrl === 'function') { probes.push({ title, kind: 'WMS izvor', url: (fmt) => so.getFeatureInfoUrl(coord, res, proj, { INFO_FORMAT: fmt, FEATURE_COUNT: 5 }) }); return; }
+      const spec = wmsSpec(so, coord, res, proj);
+      if (spec) probes.push({ title, kind: 'iz adrese pločica', url: (fmt) => buildGfi(spec, coord, res, proj, fmt) });
+      else skipped++;
+    });
+    const use = probes.slice(0, 3);
+    diag.push('slojeva za upit: ' + use.length + (use[0] ? ' (' + use.map((x) => x.title + ' [' + x.kind + ']').join(', ') + ')' : '') + (skipped ? ' · ' + skipped + ' nisu WMS' : ''));
+    if (use[0]) { try { diag.push('primjer: ' + maskKey(use[0].url('text/html')).slice(0, 190)); } catch (e) { /* ok */ } }
     const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 12000);
     try {
-      for (const l of layers) {
+      for (const pr of use) {
         if (my !== qSeq) return null;
         const results = await Promise.all(INFO_FORMATS.map(async (fmt) => {
+          let url = null;
           try {
-            const url = l.getSource().getFeatureInfoUrl(coord, res, proj, { INFO_FORMAT: fmt, FEATURE_COUNT: 5 }); if (!url) { diag.push((l.get('title') || '?') + ' ' + fmt.split('/')[1] + ': nema URL'); return []; }
+            url = pr.url(fmt); if (!url) { diag.push(pr.title + ' ' + fmt.split('/')[1] + ': nema URL'); return []; }
             const r = await fetch(url, { credentials: 'include', signal: ctl.signal });
-            const txt = r.ok ? await r.text() : ''; const pr = r.ok ? parseInfo(txt) : [];
-            diag.push((l.get('title') || '?') + ' ' + fmt.split('/')[1] + ': ' + r.status + ', ' + txt.length + ' B' + (pr.length ? ', ' + pr.length + ' polja' : ''));
-            return pr;
-          } catch (e) { diag.push((l.get('title') || '?') + ' ' + fmt.split('/')[1] + ': greška'); return []; }
+            const txt = r.ok ? await r.text() : ''; const out = r.ok ? parseInfo(txt) : [];
+            diag.push(pr.title + ' ' + fmt.split('/')[1] + ': ' + r.status + ', ' + txt.length + ' B' + (out.length ? ', ' + out.length + ' polja' : '')); return out;
+          } catch (e) { diag.push(pr.title + ' ' + fmt.split('/')[1] + ': greška'); return []; }
         }));
         const pairs = results.find((x) => x.length); if (pairs) return pairs;
       }
@@ -1151,10 +1243,10 @@ body .kgrs-force-hide{display:none!important}
   async function queryAt(coord) {
     const map = getMap(); if (!map) return;
     const my = ++qSeq; tapCoord = coord; addTap();
-    if (mounted) mounted.c.classList.remove('kgrs-ovl-hidden');                           // njihov tooltip mora biti "vidljiv" da ga procitamo
+    hiddenOvl.forEach((el) => { el.style.visibility = ''; }); hiddenOvl = [];             // njihov tooltip mora biti "vidljiv" da ga procitamo
     showDetail('loading');
     const before = overlayTexts(map), diag = []; let shown = false;
-    const done = (pairs) => { if (pairs && pairs.length && !shown && my === qSeq) { shown = true; showDetail('ok', buildDetail(pairs)); if (mounted) mounted.c.classList.add('kgrs-ovl-hidden'); } };
+    const done = (pairs) => { if (pairs && pairs.length && !shown && my === qSeq) { shown = true; showDetail('ok', buildDetail(pairs)); (map.getOverlays ? map.getOverlays().getArray() : []).forEach((o) => { const el = o.getElement && o.getElement(); if (el && el !== meEl && !el.closest('#kgrs')) { el.style.visibility = 'hidden'; hiddenOvl.push(el); } }); } };
     await Promise.all([gfiQuery(map, coord, my, diag).then(done), waitOverlay(map, before, my).then((p) => { if (!p) diag.push('Njihov tooltip: ništa u 4 s'); else diag.push('Njihov tooltip: pročitan'); done(p); })]).catch(() => {});
     if (!shown && my === qSeq) showDetail('empty', { diag });
   }

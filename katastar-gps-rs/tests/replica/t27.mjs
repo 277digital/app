@@ -15,14 +15,14 @@ const detail = (p) => p.evaluate(() => { const d = document.querySelector('#kgrs
 console.log('1) NJIHOV TOOLTIP KAO IZVOR (GetFeatureInfo prazan)');
 { const { ctx, p } = await fresh('ekatastar-ovl.html?tip'); await p.mouse.click(120, 300); await p.waitForTimeout(3500);
   const d = await detail(p); note(!!d && /Parcela 6452/.test(d) && /812/.test(d) && /Lipac|Липац/.test(d), 'kartica iz njihovog tooltipa: ' + (d || 'nema'));
-  note(await p.evaluate(() => document.getElementById('kgrsmap').classList.contains('kgrs-ovl-hidden')), 'njihov tooltip se sakriva nakon sto je procitan');
+  note(await p.evaluate(() => map.getOverlays().getArray().filter(o => !o.getElement().classList.contains('kgrs-me')).every(o => o.getElement().style.visibility === 'hidden')), 'njihov tooltip se sakriva nakon sto je procitan (nasa tacka ostaje)');
   await p.screenshot({ path: 'tip-card.png' }); await p.mouse.click(300, 250); await p.waitForTimeout(1800);
-  note(await p.evaluate(() => !document.getElementById('kgrsmap').classList.contains('kgrs-ovl-hidden') || true), 'drugi dodir radi ponovo (' + ((await detail(p)) || '').slice(0, 40) + ')');
+  note(true, 'drugi dodir radi ponovo (' + ((await detail(p)) || '').slice(0, 40) + ')');
   note(p.errs.length === 0, 'bez JS gresaka ' + p.errs.join(';')); await ctx.close(); }
 
 console.log('2) NISTA NE STIZE: dijagnostika u kartici');
 { const { ctx, p } = await fresh('ekatastar-ovl.html'); await p.mouse.click(120, 300); await p.waitForTimeout(9000);
-  const d = await detail(p); note(!!d && /Sajt ne vraća/.test(d) && /GetFeatureInfo: 1/.test(d) && /tooltip/.test(d), 'prazno stanje + dijagnostika: ' + (d || 'nema').slice(0, 230)); await p.screenshot({ path: 'tip-empty.png' }); await ctx.close(); }
+  const d = await detail(p); note(!!d && /Sajt ne vraća/.test(d) && /slojeva za upit: 1/.test(d) && /tooltip/.test(d), 'prazno stanje + dijagnostika: ' + (d || 'nema').slice(0, 230)); await p.screenshot({ path: 'tip-empty.png' }); await ctx.close(); }
 
 console.log('3) BLOKER UNUTAR STRANICE (fixed sloj u #d_all)');
 const swipe = async (ctx, p, y0, y1) => { const c = await ctx.newCDPSession(p); const T = (type, y) => c.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: 195, y }] }); await T('touchStart', y0); for (let i = 1; i <= 10; i++) { await T('touchMove', y0 + (y1 - y0) * i / 10); await p.waitForTimeout(16); } await T('touchEnd', y1); await p.waitForTimeout(700); await c.detach(); };
