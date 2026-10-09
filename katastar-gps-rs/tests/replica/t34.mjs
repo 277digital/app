@@ -47,13 +47,16 @@ const fb = await p.evaluate(() => map.getLayers().getArray().some(l => l.getSour
 note(fb, 'ako DOM oznaka nije vidljiva, pozicija se crta na mapi (rezerva)');
 await p.evaluate(() => document.getElementById('hidedot').remove());
 console.log('2b) VLASNICI: automatsko popunjavanje');
-geo.features[0].properties = { POVRSINA: '715', KULTURA: 'Njiva 3. klase', KO: '20012', LOKACIJA: '34', KT: '512/1' };
+geo.features[0].properties = { POVRSINA: '715', KULTURA: 'Njiva 3. klase', KO: '20012', LOKACIJA: '34', PARCELA_ID: '2001200011022' };
 await p.evaluate(() => { document.getElementById('ddlPP').addEventListener('change', () => setTimeout(() => { document.getElementById('ddlKO').innerHTML = '<option value="">KO</option><option value="20012">Доња Пакленица</option><option value="20013">Фоча</option>'; }, 100)); });
 await p.mouse.click(190, 500); await p.waitForTimeout(2500);
+const card = await p.evaluate(() => ({ h: document.querySelector('#kgrs .detail h3').innerText, sub: (document.querySelector('#kgrs .detail .dsub') || {}).innerText, big: getComputedStyle(document.querySelector('#kgrs .detail h3')).fontWeight, t1: document.querySelector('#kgrs .t1').innerText }));
+console.log(JSON.stringify(card));
+note(card.h === '11/22' && /Doboj/.test(card.sub) && +card.big >= 800, 'kartica: broj parcele velikim slovima i mjesto (' + JSON.stringify(card) + ')');
 await p.evaluate(() => { const b = [...document.querySelectorAll('#kgrs .detail .chip-btn')].find(x => /Vlasnici/.test(x.innerText)); if (b) b.click(); }); await p.waitForTimeout(4500);
 const f = await p.evaluate(() => ({ num: document.getElementById('i_parc').value, pp: document.getElementById('ddlPP').value, ko: document.getElementById('ddlKO').value, kotxt: (document.querySelector('#ddlKO').closest('.ui.dropdown').querySelector(':scope > .text') || {}).innerText, kodef: !!document.querySelector('#ddlKO').closest('.ui.dropdown').querySelector(':scope > .text.default'), on: document.getElementById('kgrs').classList.contains('on') }));
 console.log(JSON.stringify(f));
-note(f.num === '512/1' && f.pp === '34' && f.ko === '20012' && /Пакленица/.test(f.kotxt) && !f.kodef && !f.on, 'Vlasnici popunjava broj, opštinu i KO (po šifri) sam: ' + JSON.stringify(f));
+note(f.num === '11/22' && f.pp === '34' && f.ko === '20012' && /Пакленица/.test(f.kotxt) && !f.kodef && !f.on, 'Vlasnici popunjava broj, opštinu i KO (po šifri) sam: ' + JSON.stringify(f));
 await p.screenshot({ path: 'owners.png' });
 await p.click('#kgrs-mapbtn'); await p.waitForTimeout(2500);
 console.log('3) POMJERANJE JEDNIM PRSTOM');

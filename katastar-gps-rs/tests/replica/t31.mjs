@@ -20,7 +20,7 @@ await p.evaluate(() => {
 await p.evaluate(() => document.querySelector('button[onclick*="jumpTo"]').scrollIntoView({ block: 'center' })); await p.click('button[onclick*="jumpTo"]'); await p.waitForTimeout(900);
 await p.mouse.click(120, 300); await p.waitForTimeout(3000);
 const card = await p.evaluate(() => { const d = document.querySelector('#kgrs .detail'); return d.classList.contains('on') ? d.innerText.replace(/\n+/g, ' | ') : null; });
-note(!!card && /Površina \| 3267 m²/.test(card) && /Vrsta \| Njiva 3\. klase/.test(card) && /Vlasnici/.test(card) && !/LOKACIJA|SREZ|PL_ID|KO_ID/.test(card), 'kartica: samo povrsina, vrsta i vlasnici (ostalo sakriveno): ' + (card || 'nema'));
+note(!!card && /Površina \| 3267 m²/.test(card) && /Način korišćenja \| Njiva 3\. klase/.test(card) && /Vlasnici/.test(card) && !/LOKACIJA|SREZ|PL_ID|KO_ID/.test(card), 'kartica: samo povrsina, vrsta i vlasnici (ostalo sakriveno): ' + (card || 'nema'));
 await p.screenshot({ path: 'owners-card.png' });
 const all = await p.evaluate(() => { const b = document.querySelector('#kgrs .dmore'); b.click(); return document.querySelector('#kgrs .dall').innerText.replace(/\n+/g, ' | '); });
 note(/LOKACIJA/.test(all) && /PL_ID/.test(all), '"Svi podaci" otkrivaju ostala polja: ' + all.slice(0, 90));

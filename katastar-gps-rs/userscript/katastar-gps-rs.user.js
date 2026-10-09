@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      1.3.2
+// @version      1.4.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -161,6 +161,8 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .row1{display:flex;gap:12px;align-items:center;padding:2px 112px 0 4px;min-height:70px}
 #kgrs .ico{width:46px;height:46px;border-radius:50%;background:#23252d;display:grid;place-items:center;font-size:20px;flex:none}
 #kgrs .t1{font-size:21px;font-weight:800;letter-spacing:-.01em;line-height:1.15;overflow-wrap:anywhere}
+#kgrs .t1.num{font-size:30px;font-weight:900;letter-spacing:.01em}
+#kgrs .dhead h3.num{font-size:22px;font-weight:900;letter-spacing:.01em}
 #kgrs .t2{font-size:13px;color:#9aa0ac;margin-top:2px;line-height:1.3;overflow-wrap:anywhere}
 #kgrs .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 #kgrs .chips span{background:#23252d;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;color:#d6d9df}
@@ -235,6 +237,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs-sh .sh-ic{flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#23252d;color:#d9f244}
 #kgrs-sh .sh-ic svg{width:20px;height:20px}
 #kgrs-sh b{display:block;font:700 15px/1.2 system-ui,-apple-system,Roboto,sans-serif;color:#f2f3f5}
+#kgrs-rcsw{display:block;margin:8px 0 0;padding:0;border:0;background:none;color:#d9f244;font:600 12px system-ui,-apple-system,Roboto,sans-serif;text-decoration:underline;text-underline-offset:3px;opacity:.85}
 #kgrs-sh small{display:block;margin-top:3px;font:12px/1.3 system-ui,-apple-system,Roboto,sans-serif;color:#9aa0ac}
 #kgrs-foot{margin:auto 0 0;padding:28px 16px 4px;text-align:center;font:600 11px/1 system-ui,-apple-system,Roboto,sans-serif;letter-spacing:.08em;color:#6c7280}
 #kgrs-foot b{color:#9aa0ac;font-weight:700}
@@ -245,7 +248,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .s0:empty{display:none}
 #kgrs .st.off .s0{display:none}
 #kgrsmap,#kgrsmap .ol-viewport,#kgrsmap .ol-viewport canvas{touch-action:none!important}
-#kgrs-load{position:fixed;inset:0;z-index:2147483100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(circle at 50% 42%,#1a2112 0%,#0c0d10 62%);opacity:1;transition:opacity .5s ease;font-family:system-ui,-apple-system,Roboto,sans-serif}
+#kgrs-load{position:fixed;inset:0;z-index:2147483100;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(circle at 50% 42%,#1a2112 0%,#0c0d10 62%);opacity:1;transition:opacity .5s ease;font-family:system-ui,-apple-system,Roboto,sans-serif}
 #kgrs-load.off{opacity:0;pointer-events:none}
 #kgrs-load svg{width:54px;height:54px;animation:klpulse 1.8s ease-in-out infinite}
 @keyframes klpulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.08);opacity:1}}
@@ -443,7 +446,9 @@ body .kgrs-force-hide{display:none!important}
   /* 3c. reCAPTCHA PROZOR: CENTRIRAN I SKALIRAN                          */
   /* ------------------------------------------------------------------ */
   let rcWraps = [];
+  const RC_RAW = (() => { try { return localStorage.getItem('kgrs.rc.raw') === '1'; } catch (e) { return false; } })();   // dijagnostika: sajtov izvorni prikaz captche, bez naseg preslagivanja
   function fixRecaptcha() {
+    if (RC_RAW) return;
     const frames = document.querySelectorAll('iframe[src*="/bframe"]');
     const active = [];
     frames.forEach((fr) => {
@@ -907,8 +912,9 @@ body .kgrs-force-hide{display:none!important}
     if (!refs.root) return;
     const direct = !!(mounted && mounted.direct), p = direct ? null : parcel;
     const md = direct ? myDetail : null;
-    refs.t1.textContent = p ? 'Парцела ' + p.broj : md ? (md.number ? 'Parcela ' + md.number : 'Parcela ispod vas') : direct ? 'Mapa' : 'Парцела';
-    refs.t2.textContent = p ? [p.ko, p.opstina].filter(Boolean).join(' · ') : md ? (md.koName || 'Dodirnite parcelu za više podataka') : direct ? 'Dodirnite parcelu za površinu i vrstu' : 'Претражите парцелу па „Прикажи на мапи“';
+    refs.t1.textContent = p ? p.broj : md ? (md.number || 'Parcela') : direct ? 'Mapa' : 'Parcela';
+    refs.t1.classList.toggle('num', !!(p || (md && md.number)));
+    refs.t2.textContent = p ? [p.ko, p.opstina].filter(Boolean).map((x) => cyrToLat(x)).join(', ') : md ? (md.sub || 'Dodirnite parcelu za više podataka') : direct ? 'Dodirnite parcelu za površinu i način korišćenja' : 'Pretražite parcelu pa „Prikaži na mapi“';
     refs.chips.textContent = '';
     if (md) { if (md.area) refs.chips.append(h('span', 'a', md.area)); if (md.vrsta) refs.chips.append(h('span', null, md.vrsta)); }
     if (p) {
@@ -1226,8 +1232,9 @@ body .kgrs-force-hide{display:none!important}
     return out;
   }
   const VRSTA_RE = /kultur|klas|vrst|nacin|način|koris|namjen|upotreb|врста|култура|начин|класа/i;
+  const cyrOpt = (id, v) => { const sel = document.getElementById(id); if (!sel) return ''; const re = new RegExp('(^|\\D)' + String(v).replace(/[^\w]/g, '') + '(\\D|$)'); const o = [...sel.options].find((x) => x.value === String(v) || (x.value && re.test(x.text))); return o ? o.text.trim() : ''; };
   function buildDetail(pairs) {
-    const seen = new Set(), all = []; let area = '', vrsta = '', koName = '', koCode = '', lokacija = '', number = '', kt = '';
+    const seen = new Set(), all = []; let area = '', vrsta = '', koName = '', koCode = '', lokacija = '', number = '', kt = '', parcelId = '', derived = false;
     pairs.forEach(([k, v]) => {
       const key = k.toLowerCase(); if (seen.has(key)) return; seen.add(key);
       all.push([k, v]);
@@ -1236,12 +1243,22 @@ body .kgrs-force-hide{display:none!important}
       else if (label === 'Katastarska opština') { if (/^\d+$/.test(v)) koCode = v; else if (!koName) koName = v; }
       else if (label === 'Parcela' && !number) number = v;
       else if (/^lokacija$/i.test(k) && !lokacija) lokacija = v;
+      else if (!parcelId && !/^(pl|list)/i.test(k) && /^\d{12,14}$/.test(String(v).trim())) parcelId = String(v).trim();
       else if (!kt && /^(kt|kc|kč|кт|кч|k_?c|kat_?cest\w*|cestica|čestica)$/i.test(k)) kt = v;
       else if (!vrsta && VRSTA_RE.test(k) && !/_?id$/i.test(k)) vrsta = v;
     });
+    if (/^\d{12,14}$/.test(number)) { parcelId = parcelId || number; number = ''; }               // dugi interni ID nije broj parcele
     const okNum = (x) => /^\d{1,6}(\/\d{1,4})?$/.test(x || ''); if (!okNum(number) && okNum(kt)) number = kt;
-    const plausible = okNum(number);                       // dugi interni ID-evi nisu broj parcele
-    return { title: plausible ? 'Parcela ' + number : 'Parcela', sub: koName, area, vrsta, number: plausible ? number : '', koName, koCode, lokacija, all };
+    // sifra parcele = sifra KO (5 cifara) + broj (5) + podbroj (3): 2001200011022 -> 11/22; ne koristi se ako ne odgovara obliku
+    if (!okNum(number) && parcelId) {
+      const pre = koCode && parcelId.startsWith(koCode) ? koCode : parcelId.slice(0, 5), rest = parcelId.slice(pre.length);
+      if (rest.length === 8) { const n = +rest.slice(0, 5), sb = +rest.slice(5); if (n > 0) { number = sb ? n + '/' + sb : String(n); derived = true; } }
+      if (!koCode) koCode = pre;
+    }
+    const plausible = okNum(number);
+    const opName = lokacija ? cyrOpt('ddlPP', lokacija) : '', koDisp = koName || (koCode ? cyrOpt('ddlKO', koCode) : '');
+    const place = [koDisp, opName].filter(Boolean).map((x) => cyrToLat(x)).filter((x, i, a) => a.indexOf(x) === i).join(', ');                       // dugi interni ID-evi nisu broj parcele
+    return { title: plausible ? number : 'Parcela', sub: place || koName, area, vrsta, number: plausible ? number : '', derived: plausible && derived, parcelId, koName, koCode, lokacija, all };
   }
   function positionDetail() {
     const sh = refs.sheet.getBoundingClientRect();
@@ -1249,7 +1266,7 @@ body .kgrs-force-hide{display:none!important}
   }
   function showDetail(state, data) {
     const d = refs.detail; d.textContent = ''; d.classList.add('on'); positionDetail();
-    const head = h('div', 'dhead'); head.append(h('h3', null, (data && data.title) || 'Parcela ovdje'));
+    const head = h('div', 'dhead'); head.append(h('h3', data && data.number ? 'num' : null, (data && data.title) || 'Parcela ovdje'));
     const x = h('button', 'chip-btn x', '✕'); x.onclick = hideDetail; head.append(x); d.append(head);
     if (state === 'loading') d.append(h('div', 'none', 'Učitavam podatke sa sajta…'));
     else if (state === 'empty') {
@@ -1258,10 +1275,14 @@ body .kgrs-force-hide{display:none!important}
     }
     else {
       if (data.sub) d.append(h('div', 'dsub', data.sub));
+      if (data.derived) d.append(h('div', 'dnote', 'Broj izveden iz šifre parcele — uporedite sa brojem na mapi.'));
       const row = (k, v) => { const r = h('div', 'kv'); r.append(h('span', null, k), h('b', null, v)); d.append(r); };
       if (data.area) row('Površina', data.area);
-      if (data.vrsta) row('Vrsta', data.vrsta);
-      if (!data.area && !data.vrsta) d.append(h('div', 'none', 'Sajt nije vratio površinu ni vrstu za ovu tačku.'));
+      if (data.vrsta) row('Način korišćenja', data.vrsta);
+      const sameP = parcel && data.number && parcel.broj === data.number && data.koName && latToCyr(data.koName).toLowerCase() === (parcel.ko || '').toLowerCase();
+      if (sameP && !data.vrsta) parcel.dijelovi.slice(0, 4).forEach((x) => { if (x[0]) row('Način korišćenja', cyrToLat(x[0]) + (x[1] ? ' · ' + x[1] : '')); });
+      else if (!data.vrsta) d.append(h('div', 'dnote', 'Način korišćenja sajt ne daje za dodir na mapu; vidi se nakon pretrage (Vlasnici).'));
+      if (!data.area && !data.vrsta) d.append(h('div', 'none', 'Sajt nije vratio površinu ni način korišćenja za ovu tačku.'));
       // vlasnici: ako je ovo ista parcela koju smo pretrazili, vec ih imamo; inace idu preko njihove pretrage
       const same = parcel && parcel.vlasnici.length && data.number && parcel.broj === data.number && data.koName && latToCyr(data.koName).toLowerCase() === (parcel.ko || '').toLowerCase();
       const ob = h('div', 'owners-box'); ob.append(h('div', 'okey', 'Vlasnici'));
@@ -1322,7 +1343,7 @@ body .kgrs-force-hide{display:none!important}
   }
   function startSearchFlow(info) {
     hideDetail(); closeMap();
-    pendingSearch = { num: info.number || '', t0: Date.now(), clicked: false, sig: '', tc: 0 };
+    pendingSearch = { num: info.number || '', id: info.parcelId || '', derived: !!info.derived, t0: Date.now(), clicked: false, sig: '', tc: 0 };
     setTimeout(async () => {
       const da = document.getElementById('d_all'); if (da) da.scrollTo(0, 0);
       const notes = await prefillSearch(info);
@@ -1342,8 +1363,10 @@ body .kgrs-force-hide{display:none!important}
     }
     const rows = [...document.querySelectorAll('#d_info table[id^=parc_] tbody tr')].filter((tr) => tr.querySelector('button[onclick*="jumpTo"]') && !tr.classList.contains('kgrs-dup'));
     if (rows.length && (box ? box.innerText : '') !== ps.sig) {
-      const row = rows.find((tr) => ps.num && txt(tr.children[0]) === ps.num) || rows[0];
-      pendingSearch = null; if (toastEl) toastEl.classList.remove('on'); row.querySelector('button[onclick*="jumpTo"]').click();     // otvara mapu; panel prikazuje vlasnike
+      const jt = (tr) => tr.querySelector('button[onclick*="jumpTo"]').getAttribute('onclick') || '';
+      const row = (ps.id && rows.find((tr) => jt(tr).includes(ps.id))) || rows.find((tr) => ps.num && txt(tr.children[0]) === ps.num) || ((ps.derived || !ps.num) && rows.length > 1 ? null : rows[0]);
+      pendingSearch = null;
+      if (!row) { toast('Pretraga je vratila više parcela: izaberite pravu iz liste („Prikaži na mapi“).', 9000); return; } if (toastEl) toastEl.classList.remove('on'); row.querySelector('button[onclick*="jumpTo"]').click();     // otvara mapu; panel prikazuje vlasnike
     } else if (Date.now() - ps.tc > 25000) { pendingSearch = null; toast('Pretraga nije vratila rezultat. Pokušajte ponovo.', 6000); }
   }
   /** Tekst iz njihovih OpenLayers overlay-a (tooltip/popup koji njihov kod prikaze na dodir parcele). */
@@ -1425,7 +1448,7 @@ body .kgrs-force-hide{display:none!important}
   }
   async function gfiQuery(map, coord, my, diag) {
     const { probes, skipped } = buildProbes(map, coord);
-    const use = probes.slice(0, 3);
+    const use = probes.slice(0, 5), acc = [];
     diag.push('slojeva za upit: ' + use.length + (use[0] ? ' (' + use.map((x) => x.title + ' [' + x.kind + ']').join(', ') + ')' : '') + (skipped ? ' · ' + skipped + ' nisu WMS' : ''));
     if (use[0]) { try { diag.push('primjer: ' + maskKey(use[0].url('text/html')).slice(0, 190)); } catch (e) { /* ok */ } }
     const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 12000);
@@ -1441,10 +1464,10 @@ body .kgrs-force-hide{display:none!important}
             diag.push(pr.title + ' ' + fmt.split('/')[1] + ': ' + r.status + ', ' + txt.length + ' B' + (out.length ? ', ' + out.length + ' polja' : '')); return out;
           } catch (e) { diag.push(pr.title + ' ' + fmt.split('/')[1] + ': greška'); return []; }
         }));
-        const pairs = results.find((x) => x.length); if (pairs) return pairs;
+        const pairs = results.find((x) => x.length); if (pairs) { acc.push(...pairs); if (buildDetail(acc).number) return acc; }   // trazimo dalje dok se ne nadje broj parcele
       }
     } finally { clearTimeout(to); }
-    return null;
+    return acc.length ? acc : null;
   }
   /* ---- parcela ispod nas (direktna mapa): geometrija iz GetFeatureInfo (GeoJSON), samo u memoriji ---- */
   let myRings = null, myDetail = null; const myQ = { busy: false, t: 0, at: null };
@@ -1592,7 +1615,8 @@ body .kgrs-force-hide{display:none!important}
       const row = anchor && (anchor.closest('.items-row') || anchor.closest('.item') || anchor.parentElement);
       if (row && row.parentElement) {
         const sh = document.createElement('div'); sh.id = 'kgrs-sh';
-        sh.innerHTML = '<span class="sh-ic">' + SVG_SEARCH + '</span><span><b>Pretraga po broju parcele</b><small>Potrebna potvrda „Nisam robot“ · vlasnici se prikazuju samo ovdje</small></span>';
+        sh.innerHTML = '<span class="sh-ic">' + SVG_SEARCH + '</span><span><b>Pretraga po broju parcele</b><small>Potrebna potvrda „Nisam robot“ · vlasnici se prikazuju samo ovdje</small><button type="button" id="kgrs-rcsw">' + (RC_RAW ? 'Vrati prilagođeni prikaz potvrde' : 'Potvrda ne prolazi? Isprobaj izvorni prikaz') + '</button></span>';
+        const sw = sh.querySelector('#kgrs-rcsw'); if (sw) sw.onclick = () => { try { localStorage.setItem('kgrs.rc.raw', RC_RAW ? '0' : '1'); } catch (e) { /* ok */ } location.reload(); };
         row.parentElement.insertBefore(sh, row);
       }
     }

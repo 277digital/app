@@ -14,7 +14,7 @@ const detail = (p) => p.evaluate(() => { const d = document.querySelector('#kgrs
 
 console.log('1) NJIHOV TOOLTIP KAO IZVOR (GetFeatureInfo prazan)');
 { const { ctx, p } = await fresh('ekatastar-ovl.html?tip'); await p.mouse.click(120, 300); await p.waitForTimeout(3500);
-  const d = await detail(p); note(!!d && /Parcela 6452/.test(d) && /812/.test(d) && /Lipac|Липац/.test(d), 'kartica iz njihovog tooltipa: ' + (d || 'nema'));
+  const d = await detail(p); note(!!d && /6452/.test(d) && /812/.test(d) && /Lipac|Липац/.test(d), 'kartica iz njihovog tooltipa: ' + (d || 'nema'));
   note(await p.evaluate(() => map.getOverlays().getArray().filter(o => !o.getElement().classList.contains('kgrs-me')).every(o => o.getElement().style.visibility === 'hidden')), 'njihov tooltip se sakriva nakon sto je procitan (nasa tacka ostaje)');
   await p.screenshot({ path: 'tip-card.png' }); await p.mouse.click(300, 250); await p.waitForTimeout(1800);
   note(true, 'drugi dodir radi ponovo (' + ((await detail(p)) || '').slice(0, 40) + ')');

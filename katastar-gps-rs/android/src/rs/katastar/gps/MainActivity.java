@@ -120,6 +120,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                CookieManager.getInstance().flush();
                 inject(view, url);
                 ui.postDelayed(show, 250);
             }
@@ -172,6 +173,12 @@ public class MainActivity extends Activity {
         if (u.getHost() != null && u.getHost().endsWith("rgurs.org")) {
             view.evaluateJavascript(script, null);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        CookieManager.getInstance().flush();
+        super.onPause();
     }
 
     @Override
