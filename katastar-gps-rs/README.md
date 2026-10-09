@@ -26,6 +26,11 @@ Mobilna web aplikacija (PWA) za hodanje po placu uz GPS: prikaz parcela na satel
 - **Zamrzavanje skrola:** uzrok je bio providni `position:fixed` sloj (dimmer) unutar same stranice, koji ne propušta skrol roditelju. Zaštita ga traži i unutar stranice, a na mjestu dodira i svaki mali sloj iznad nje.
 - Dugme Kreni/Stop: staklasti disk sa kružnim lukom, ▶ / spinner / ■ i zeleni puls.
 
+## Mapa bez pretrage (v1.2)
+- Dugme **Mapa** na početnoj stranici otvara mapu preko cijelog ekrana odmah, bez pretrage i bez reCAPTCHA-e: koristi mapu koju sama stranica već učitava. Dodir na parcelu daje površinu i vrstu; GPS tačka prati kretanje.
+- Ako sajt mapu učita tek nakon prve pretrage, dugme to javi; tada je potrebna jedna pretraga.
+- Captcha je potrebna samo za vlasnike (njihova pretraga), vidi ispod.
+
 ## Vlasnici (v1.1)
 - Kartica za dodirnutu parcelu pokazuje samo površinu, vrstu i vlasnike (ostalo je iza „Svi podaci sa sajta“).
 - Vlasnici nisu u podacima sa mape, nego samo u njihovoj pretrazi koja traži reCAPTCHA-u. Aplikacija **ne zaobilazi** captchu: popuni opštinu, katastarsku opštinu i broj parcele, korisnik potvrdi „Нисам робот“, pa se sama pritisne „Претражи“ i parcela otvori na mapi (panel sa vlasnicima).

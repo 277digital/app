@@ -1,0 +1,38 @@
+import { chromium } from 'playwright-core'; import http from 'http'; import fs from 'fs';
+const types={'.js':'text/javascript','.css':'text/css','.html':'text/html'};
+const srv = http.createServer((q, r) => { let u=decodeURIComponent(q.url.split('?')[0]); const f='.'+u; try { const e=f.slice(f.lastIndexOf('.')); r.setHeader('content-type',types[e]||'application/octet-stream'); r.end(fs.readFileSync(f)); } catch { r.statusCode = 404; r.end(); } }).listen(8161);
+const b = await chromium.launch({ ...(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}), args: ['--no-sandbox'] });
+const USER = new URL('../../userscript/katastar-gps-rs.user.js', import.meta.url).pathname;
+const fails = []; const note = (ok, msg) => { if (!ok) fails.push(msg); console.log(ok ? '  ok  ' : '  FAIL', msg); };
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+const JSONR = JSON.stringify({ features: [{ properties: { POVRSINA: '812', KO_NAZIV: 'Doboj', KULTURA: 'Voćnjak 2. klase' } }] });
+const mk = () => b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, permissions: ['geolocation'], geolocation: { latitude: 44.73045, longitude: 18.0807, accuracy: 4 } });
+const boot = async () => { const ctx = await mk(); const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(e.message));
+  await p.route(/\/wms\?/, r => /GetFeatureInfo/i.test(r.request().url()) ? r.fulfill({ status: 200, contentType: 'application/json', body: JSONR }) : r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+  await p.goto('http://localhost:8161/ekatastar-wms.html'); await p.addScriptTag({ path: USER }); await p.waitForTimeout(800); return { ctx, p }; };
+console.log('1) MAPA BEZ PRETRAGE (bez captche)');
+{ const { ctx, p } = await boot();
+  note(await p.evaluate(() => { const b = document.getElementById('kgrs-mapbtn'); return !!b && getComputedStyle(b).display !== 'none'; }), 'dugme "Mapa" je na pocetnoj stranici');
+  await p.screenshot({ path: 'mapbtn.png' });
+  await p.click('#kgrs-mapbtn'); await p.waitForTimeout(1500);
+  const st = await p.evaluate(() => ({ on: document.getElementById('kgrs').classList.contains('on'), tgt: map.getTargetElement().id, btn: getComputedStyle(document.getElementById('kgrs-mapbtn')).display, t1: document.querySelector('#kgrs .t1').innerText, t2: document.querySelector('#kgrs .t2').innerText, modal: document.getElementById('mm').classList.contains('show') }));
+  note(st.on && st.tgt === 'kgrsmap' && st.btn === 'none' && st.t1 === 'Mapa' && !st.modal, 'mapa se otvara preko cijelog ekrana bez pretrage i bez njihovog modala: ' + JSON.stringify(st));
+  await p.waitForTimeout(2500); const c = await p.evaluate(() => { const g = ol.proj.transform([18.0807, 44.73045], 'EPSG:4326', map.getView().getProjection()), v = map.getView().getCenter(); return Math.hypot(g[0] - v[0], g[1] - v[1]); });
+  note(c < 15, 'mapa se centrira na korisnika (odstupanje ' + c.toFixed(1) + ' m)');
+  await p.mouse.click(150, 300); await p.waitForTimeout(3000);
+  const d = await p.evaluate(() => { const e = document.querySelector('#kgrs .detail'); return e.classList.contains('on') ? e.innerText.replace(/\n+/g, ' | ') : null; });
+  note(!!d && /Površina \| 812 m²/.test(d) && /Vrsta \| Voćnjak/.test(d), 'dodir na parcelu: povrsina i vrsta bez ikakve pretrage: ' + (d || 'nema').slice(0, 120));
+  await p.click('#kgrs .go'); await p.waitForTimeout(1400);
+  const stt = await p.evaluate(() => document.querySelector('#kgrs .st').innerText.replace(/\n/g, ' | '));
+  note(!/tražene parcele|IZVAN|UNUTAR/.test(stt) && /Pozicija prikazana/.test(stt), 'GPS u direct nacinu ne pominje "trazenu parcelu": ' + stt);
+  await p.click('#kgrs .top .rb'); await p.waitForTimeout(1500);
+  const af = await p.evaluate(() => ({ on: document.getElementById('kgrs').classList.contains('on'), tgt: map.getTargetElement().id, btn: getComputedStyle(document.getElementById('kgrs-mapbtn')).display, leftovers: document.querySelectorAll('.kgrs-fs,.kgrs-force-hide,#kgrsmap').length, scroll: (() => { const d = document.getElementById('d_all'); d.scrollTo(0, 0); const a = d.scrollTop; d.scrollTo(0, 120); return d.scrollTop !== a; })() }));
+  note(!af.on && af.tgt === 'mapdiv' && af.btn !== 'none' && af.leftovers === 0 && af.scroll, 'zatvaranje: mapa vracena njihovoj stranici, dugme "Mapa" opet vidljivo, skrol radi: ' + JSON.stringify(af));
+  note(p.errs.length === 0, 'bez JS gresaka ' + p.errs.join(';')); await ctx.close(); }
+console.log('2) SAJT JOS NIJE UCITAO MAPU');
+{ const { ctx, p } = await boot(); await p.evaluate(() => { window.__m = window.map; window.map = undefined; });
+  await p.click('#kgrs-mapbtn'); await p.waitForTimeout(500);
+  const t = await p.evaluate(() => { const e = document.getElementById('kgrs-toast'); return e && e.classList.contains('on') ? e.innerText : null; });
+  note(!!t && /tek nakon prve pretrage/.test(t), 'poruka kad njihova mapa jos ne postoji: ' + (t || 'nema')); await ctx.close(); }
+console.log('\nUKUPNO PROBLEMA:', fails.length); fails.forEach(f => console.log(' -', f));
+await b.close(); srv.close();

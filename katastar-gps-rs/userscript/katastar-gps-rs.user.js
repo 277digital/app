@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      1.1.0
+// @version      1.2.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -208,6 +208,9 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 .kgrs-me-dir{position:absolute;left:-60px;top:-60px;width:120px;height:120px;opacity:0;transition:opacity .3s;will-change:transform;pointer-events:none}
 .kgrs-me.has-dir .kgrs-me-dir{opacity:1}
 @keyframes kmepulse{0%{transform:scale(.7);opacity:.85}65%{transform:scale(3.1);opacity:0}100%{transform:scale(3.1);opacity:0}}
+#kgrs-mapbtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147482500;height:46px;padding:0 18px;border:0;border-radius:999px;display:flex;align-items:center;gap:8px;font:700 15px system-ui,-apple-system,Roboto,sans-serif;color:#141507;background:#d9f244;box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.2)}
+#kgrs-mapbtn span{font-size:17px}
+#kgrs-mapbtn:active{transform:scale(.96)}
 #kgrs-toast{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483200;padding:12px 14px;border-radius:16px;background:rgba(20,21,26,.94);color:#f2f3f5;font:13px/1.4 system-ui,-apple-system,Roboto,sans-serif;border:1px solid rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.5);display:none}
 #kgrs-toast.on{display:block}
 #kgrs-toast b{color:#d9f244}
@@ -457,7 +460,7 @@ body .kgrs-force-hide{display:none!important}
   document.addEventListener('click', (e) => {
     const t = e.target;
     const b = t.closest && t.closest('button[onclick*="jumpTo"]');
-    if (b) { unforce(); try { captureParcel(b); } catch (err) { /* nije kriticno */ } mapRequested = Date.now(); return; }
+    if (b) { cancelCleanup(); unforce(); try { captureParcel(b); } catch (err) { /* nije kriticno */ } mapRequested = Date.now(); return; }
     const c = t.closest && t.closest('.button, button');
     if (c && /^Затвори$/.test(c.textContent.trim())) mapRequested = 0;
   }, true);
@@ -837,9 +840,9 @@ body .kgrs-force-hide{display:none!important}
 
   function renderParcel() {
     if (!refs.root) return;
-    const p = parcel;
-    refs.t1.textContent = p ? 'Парцела ' + p.broj : 'Парцела';
-    refs.t2.textContent = p ? [p.ko, p.opstina].filter(Boolean).join(' · ') : 'Претражите парцелу па „Прикажи на мапи“';
+    const direct = !!(mounted && mounted.direct), p = direct ? null : parcel;
+    refs.t1.textContent = p ? 'Парцела ' + p.broj : direct ? 'Mapa' : 'Парцела';
+    refs.t2.textContent = p ? [p.ko, p.opstina].filter(Boolean).join(' · ') : direct ? 'Dodirnite parcelu za površinu i vrstu' : 'Претражите парцелу па „Прикажи на мапи“';
     refs.chips.textContent = '';
     if (p) {
       if (p.povrsina) { const c = h('span', 'a', p.povrsina); refs.chips.append(c); }
@@ -869,7 +872,7 @@ body .kgrs-force-hide{display:none!important}
     const acc = Math.round(raw.acc), c = calibrated();
     setPill(acc <= 5 ? 'ok' : acc <= 15 ? 'warn' : 'bad', 'GPS ±' + acc + ' m', cal ? 'kalibrisano' : acc <= 5 ? 'odlično' : acc <= 15 ? 'dobro' : 'slabo');
     refs.go.className = 'go run'; refs.goT.textContent = 'Stop';
-    const rings = parcelRings(getMap());
+    const rings = (mounted && mounted.direct) ? [] : parcelRings(getMap());
     if (!rings.length) { refs.detBtn.style.display = ''; refs.st.className = 'st'; refs.s1.textContent = 'Pozicija prikazana'; refs.s2.textContent = 'E ' + c[0].toFixed(1) + ' · N ' + c[1].toFixed(1); return; }
     const ring = rings[0], inside = inRing(c, ring), d = distRing(c, ring);
     const near = d < raw.acc;
@@ -886,18 +889,33 @@ body .kgrs-force-hide{display:none!important}
   /* Mapu NE prepravljamo u njihovom modalu: prebacimo je (map.setTarget) u sopstveni fullscreen sloj,
      a pri zatvaranju je vratimo i njihov modal zatvori njihov kod. Tako nema ostataka ni zatamnjenja. */
   let mounted = null;
-  function mountMap(map, t) {
+  function mountMap(map, t, direct) {
     const c = document.createElement('div'); c.id = 'kgrsmap'; document.body.appendChild(c);
-    mounted = { c, orig: map.getTarget(), t };
+    mounted = { c, orig: map.getTarget(), t, direct: !!direct };
     map.setTarget(c);
     installBases(map);
     map.on('singleclick', onMapTap);
     try { const v = map.getView(); if (v.getMaxZoom && v.getMaxZoom() < 21 && v.setMaxZoom) v.setMaxZoom(21); } catch (e) { /* ok */ }
     map.updateSize();
-    refs.root.classList.add('on');
+    refs.root.classList.add('on'); const mbt = document.getElementById('kgrs-mapbtn'); if (mbt) mbt.style.display = 'none';
     if (innerHeight < 700 || innerWidth > innerHeight) refs.sheet.classList.add('mini');
     renderParcel(); refreshStatus();
-    setTimeout(() => { map.updateSize(); fitParcel(map); }, 150);
+    setTimeout(() => { map.updateSize(); if (direct) centerOnMe(map); else fitParcel(map); }, 150);
+  }
+  /** Mapa otvorena bez pretrage: centriraj na korisnika (jednokratno ocitavanje pozicije). */
+  function centerOnMe(map) {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((p) => {
+      if (!mounted || !mounted.direct) return;
+      try { const v = map.getView(), xy = ol.proj.transform([p.coords.longitude, p.coords.latitude], 'EPSG:4326', v.getProjection()); v.animate({ center: xy, zoom: Math.max(v.getZoom() || 0, 18), duration: 400 }); } catch (e) { /* ok */ }
+    }, () => { setHint('Mapa je otvorena. Pritisnite <b>Kreni</b> da vas prati GPS, ili dodirnite parcelu za podatke.', true, 6000); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 15000 });
+  }
+  /** Dugme „Mapa“ na pocetnoj stranici: otvara mapu odmah, bez pretrage (captcha treba tek za vlasnike). */
+  function openMapDirect() {
+    if (mounted) return;
+    const map = getMap();
+    if (!map || !map.getView) { toast('Sajt mapu učitava tek nakon prve pretrage (traži „Нисам робот“). Pretražite bilo koju parcelu jednom, pa pritisnite <b>Mapa</b>.', 9000); return; }
+    cancelCleanup(); mapRequested = 0; mountMap(map, (map.getTargetElement && map.getTargetElement()) || document.body, true);
   }
   /** Parcela se centrira iznad donjeg panela (ako je sajt drzi kao vektor). */
   function fitParcel(map) {
@@ -920,7 +938,7 @@ body .kgrs-force-hide{display:none!important}
       map.un('pointerdrag', onDrag); map.un('singleclick', onMapTap);
       map.setTarget(mounted.orig); map.updateSize();
     }
-    mounted.c.remove(); mounted = null; mapRequested = 0;
+    mounted.c.remove(); mounted = null; mapRequested = 0; const mbt = document.getElementById('kgrs-mapbtn'); if (mbt) mbt.style.display = '';
     refs.root.classList.remove('on');
   }
   // vidljivost bez minimalne velicine (dugmad su mala)
@@ -932,8 +950,9 @@ body .kgrs-force-hide{display:none!important}
     }
     return true;
   }
-  let forcedHidden = [];
+  let forcedHidden = [], cleanupTimers = [];
   function unforce() { forcedHidden.forEach((e) => e.classList.remove('kgrs-force-hide')); forcedHidden = []; }
+  function cancelCleanup() { cleanupTimers.forEach(clearTimeout); cleanupTimers = []; }          // novo otvaranje mape otkazuje zakazano "odmrzavanje" od prethodnog zatvaranja
   /** Sloj koji gutaa dodire: fixed element (unutar stranice bilo koje velicine, izvan nje veci dio ekrana) ili aktivni dimmer. */
   function isBlocker(e, da, precise) {
     if (!e || e === document.body || e === document.documentElement || e === da) return false;
@@ -953,7 +972,7 @@ body .kgrs-force-hide{display:none!important}
   }
   /** Safety net: nakon zatvaranja mape ne smije ostati nijedan sloj preko stranice koji guta dodire. */
   function unfreeze() {
-    if (mounted) return;
+    if (mounted || mapRequested) return;                       // mapa se upravo otvara: njihov modal je legitimno vidljiv
     const da = document.getElementById('d_all');
     if (da) { da.style.setProperty('overflow-y', 'auto', 'important'); da.style.setProperty('overflow-x', 'hidden', 'important'); }
     document.body.classList.remove('dimmed', 'dimmable', 'scrolling');
@@ -963,13 +982,15 @@ body .kgrs-force-hide{display:none!important}
   function closeMap() {
     const t = mounted && mounted.t;
     const modal = t && (t.closest('.ui.modal') || t.closest('[class*=modal]'));
+    const wasDirect = mounted && mounted.direct;
     unmountMap();
+    if (wasDirect) return;                                  // njihov modal nije ni otvaran
     // njihov modal zatvara njihov kod: trazimo dugme „Затвори“ unutar TOG modala (na stranici ih ima vise)
     const all = [...document.querySelectorAll('.ui.button, button, .button')].filter((x) => /^Затвори$/.test(x.textContent.trim()));
     const b = (modal && all.find((x) => modal.contains(x))) || all.find(visibleEl) || all[0];
     if (b) b.click();
-    setTimeout(() => ensureClosed(modal, t), 700);
-    setTimeout(unfreeze, 1700); setTimeout(unfreeze, 3500); setTimeout(unfreeze, 7000);
+    cancelCleanup();
+    cleanupTimers = [setTimeout(() => ensureClosed(modal, t), 700), setTimeout(unfreeze, 1700), setTimeout(unfreeze, 3500), setTimeout(unfreeze, 7000)];
   }
   // Ako se njihov modal ipak nije zatvorio (a ostavlja zatamnjenje koje blokira dodire), zatvaramo ga preko jQuery-ja, pa na silu.
   function ensureClosed(modal, t) {
@@ -1382,6 +1403,7 @@ body .kgrs-force-hide{display:none!important}
   function boot() {
     if (!(window.ol && ol.source && ol.layer && ol.proj && document.body)) return setTimeout(boot, 400);
     prepPage(); tidy(); buildUi();
+    const mb = document.createElement('button'); mb.id = 'kgrs-mapbtn'; mb.type = 'button'; mb.innerHTML = '<span>▦</span> Mapa'; mb.onclick = openMapDirect; document.body.appendChild(mb);
     let tt = 0; const mo = new MutationObserver(() => { clearTimeout(tt); tt = setTimeout(tidy, 250); });
     mo.observe(document.body, { childList: true, subtree: true });
     setInterval(() => { try { sync(); fixRecaptcha(); fixTabs(); searchFlowTick(); } catch (e) { /* ok */ } }, 500);
