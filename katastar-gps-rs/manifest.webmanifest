@@ -1,0 +1,9 @@
+{
+  "name": "Katastar GPS RS",
+  "short_name": "Katastar GPS",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1f6f43",
+  "theme_color": "#1f6f43",
+  "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

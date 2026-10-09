@@ -1,0 +1,11 @@
+{
+  "name": "katastar-gps-rs",
+  "version": "0.1.0",
+  "description": "Mobilna web aplikacija (PWA) za hodanje po placu uz GPS, pretragu parcela i snimanje granica",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes http-server . -p 8080 -c-1",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "license": "ISC"
+}

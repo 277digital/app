@@ -1,0 +1,4 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","properties":{"parcela":"1","ko":"Доња Пакленица","opstina":"Добој"},"geometry":{"type":"Polygon","coordinates":[[[18.0800,44.7300],[18.0814,44.7300],[18.0814,44.7309],[18.0800,44.7309],[18.0800,44.7300]]]}},
+{"type":"Feature","properties":{"parcela":"512/1","ko":"Доња Пакленица","opstina":"Добој"},"geometry":{"type":"Polygon","coordinates":[[[18.0820,44.7300],[18.0830,44.7300],[18.0830,44.7306],[18.0820,44.7306],[18.0820,44.7300]]]}}
+]}
