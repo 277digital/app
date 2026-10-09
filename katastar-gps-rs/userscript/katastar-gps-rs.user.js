@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.2.0
+// @version      0.2.1
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -237,10 +237,25 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     parcel = p;
     renderParcel();
   }
+  // Prekrivac se prikazuje TEK nakon klika na „Прикажи на мапи“ (a ne cim mapa postoji u stranici)
+  let mapRequested = 0; // vrijeme zahtjeva, 0 = nije trazena
   document.addEventListener('click', (e) => {
-    const b = e.target.closest && e.target.closest('button[onclick*="jumpTo"]');
-    if (b) { try { captureParcel(b); } catch (err) { /* nije kriticno */ } }
+    const t = e.target;
+    const b = t.closest && t.closest('button[onclick*="jumpTo"]');
+    if (b) { try { captureParcel(b); } catch (err) { /* nije kriticno */ } mapRequested = Date.now(); return; }
+    const c = t.closest && t.closest('.button, button');
+    if (c && /^Затвори$/.test(c.textContent.trim())) mapRequested = 0;
   }, true);
+  // Element je stvarno vidljiv: ima dimenzije, a ni on ni roditelji nisu display:none / visibility:hidden / providni
+  function isShown(el) {
+    if (!el || !el.getClientRects().length) return false;
+    for (let e = el; e && e.nodeType === 1; e = e.parentElement) {
+      const cs = getComputedStyle(e);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) return false;
+    }
+    const r = el.getBoundingClientRect();
+    return r.width > 50 && r.height > 50;
+  }
 
   /* ------------------------------------------------------------------ */
   /* 5. GEOMETRIJA (u jedinicama mape = metri u EPSG:31276)               */
@@ -522,10 +537,11 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     const t = map && map.getTargetElement && map.getTargetElement();
     if (!refs.root) return;
     const wasOn = refs.root.classList.contains('on');
-    // "vidljivo" = mapa se iscrtava (display ne forsiramo, pa kad sajt sakrije modal, mapa nestaje)
-    const visible = !!(t && t.getClientRects().length);
+    // prikaz samo nakon klika na „Прикажи на мапи“ i dok je mapa stvarno vidljiva
+    if (mapRequested && !fsTarget && Date.now() - mapRequested > 8000) mapRequested = 0; // mapa se nije otvorila
+    const visible = !!(mapRequested && isShown(t));
     if (visible && !fsTarget) { enterFullscreen(t); map.updateSize(); }
-    if (!visible && fsTarget) leaveFullscreen();
+    if (!visible && fsTarget) { leaveFullscreen(); mapRequested = 0; }
     refs.root.classList.toggle('on', visible);
     if (visible && !wasOn) { renderParcel(); refreshStatus(); }
     if (!visible && wasOn && watchId !== null) stop();
