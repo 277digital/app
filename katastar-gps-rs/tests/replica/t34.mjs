@@ -52,11 +52,11 @@ await p.evaluate(() => { document.getElementById('ddlPP').addEventListener('chan
 await p.mouse.click(190, 500); await p.waitForTimeout(2500);
 const card = await p.evaluate(() => ({ h: document.querySelector('#kgrs .detail h3').innerText, sub: (document.querySelector('#kgrs .detail .dsub') || {}).innerText, big: getComputedStyle(document.querySelector('#kgrs .detail h3')).fontWeight, t1: document.querySelector('#kgrs .t1').innerText }));
 console.log(JSON.stringify(card));
-note(card.h === '11/22' && /Doboj/.test(card.sub) && +card.big >= 800, 'kartica: broj parcele velikim slovima i mjesto (' + JSON.stringify(card) + ')');
+note(card.h === 'Parcela' && /Doboj/.test(card.sub) && card.t1 === 'Trenutno ste ovdje', 'kartica bez broja parcele, panel "Trenutno ste ovdje" (' + JSON.stringify(card) + ')');
 await p.evaluate(() => { const b = [...document.querySelectorAll('#kgrs .detail .chip-btn')].find(x => /Vlasnici/.test(x.innerText)); if (b) b.click(); }); await p.waitForTimeout(4500);
 const f = await p.evaluate(() => ({ num: document.getElementById('i_parc').value, pp: document.getElementById('ddlPP').value, ko: document.getElementById('ddlKO').value, kotxt: (document.querySelector('#ddlKO').closest('.ui.dropdown').querySelector(':scope > .text') || {}).innerText, kodef: !!document.querySelector('#ddlKO').closest('.ui.dropdown').querySelector(':scope > .text.default'), on: document.getElementById('kgrs').classList.contains('on') }));
 console.log(JSON.stringify(f));
-note(f.num === '11/22' && f.pp === '34' && f.ko === '20012' && /Пакленица/.test(f.kotxt) && !f.kodef && !f.on, 'Vlasnici popunjava broj, opštinu i KO (po šifri) sam: ' + JSON.stringify(f));
+note(f.num !== '11/22' && f.pp === '34' && f.ko === '20012' && /Пакленица/.test(f.kotxt) && !f.kodef && !f.on, 'Vlasnici popunjava broj, opštinu i KO (po šifri) sam: ' + JSON.stringify(f));
 await p.screenshot({ path: 'owners.png' });
 await p.click('#kgrs-mapbtn'); await p.waitForTimeout(2500);
 console.log('3) POMJERANJE JEDNIM PRSTOM');

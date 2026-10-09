@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      1.4.0
+// @version      1.4.1
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -912,8 +912,8 @@ body .kgrs-force-hide{display:none!important}
     if (!refs.root) return;
     const direct = !!(mounted && mounted.direct), p = direct ? null : parcel;
     const md = direct ? myDetail : null;
-    refs.t1.textContent = p ? p.broj : md ? (md.number || 'Parcela') : direct ? 'Mapa' : 'Parcela';
-    refs.t1.classList.toggle('num', !!(p || (md && md.number)));
+    refs.t1.textContent = p ? p.broj : direct ? 'Trenutno ste ovdje' : 'Parcela';
+    refs.t1.classList.toggle('num', !!p);
     refs.t2.textContent = p ? [p.ko, p.opstina].filter(Boolean).map((x) => cyrToLat(x)).join(', ') : md ? (md.sub || 'Dodirnite parcelu za više podataka') : direct ? 'Dodirnite parcelu za površinu i način korišćenja' : 'Pretražite parcelu pa „Prikaži na mapi“';
     refs.chips.textContent = '';
     if (md) { if (md.area) refs.chips.append(h('span', 'a', md.area)); if (md.vrsta) refs.chips.append(h('span', null, md.vrsta)); }
@@ -1249,16 +1249,11 @@ body .kgrs-force-hide{display:none!important}
     });
     if (/^\d{12,14}$/.test(number)) { parcelId = parcelId || number; number = ''; }               // dugi interni ID nije broj parcele
     const okNum = (x) => /^\d{1,6}(\/\d{1,4})?$/.test(x || ''); if (!okNum(number) && okNum(kt)) number = kt;
-    // sifra parcele = sifra KO (5 cifara) + broj (5) + podbroj (3): 2001200011022 -> 11/22; ne koristi se ako ne odgovara obliku
-    if (!okNum(number) && parcelId) {
-      const pre = koCode && parcelId.startsWith(koCode) ? koCode : parcelId.slice(0, 5), rest = parcelId.slice(pre.length);
-      if (rest.length === 8) { const n = +rest.slice(0, 5), sb = +rest.slice(5); if (n > 0) { number = sb ? n + '/' + sb : String(n); derived = true; } }
-      if (!koCode) koCode = pre;
-    }
+    if (!koCode && parcelId) koCode = parcelId.slice(0, 5);
     const plausible = okNum(number);
     const opName = lokacija ? cyrOpt('ddlPP', lokacija) : '', koDisp = koName || (koCode ? cyrOpt('ddlKO', koCode) : '');
     const place = [koDisp, opName].filter(Boolean).map((x) => cyrToLat(x)).filter((x, i, a) => a.indexOf(x) === i).join(', ');                       // dugi interni ID-evi nisu broj parcele
-    return { title: plausible ? number : 'Parcela', sub: place || koName, area, vrsta, number: plausible ? number : '', derived: plausible && derived, parcelId, koName, koCode, lokacija, all };
+    return { title: 'Parcela', sub: place || koName, area, vrsta, number: plausible ? number : '', derived: plausible && derived, parcelId, koName, koCode, lokacija, all };
   }
   function positionDetail() {
     const sh = refs.sheet.getBoundingClientRect();
@@ -1266,7 +1261,7 @@ body .kgrs-force-hide{display:none!important}
   }
   function showDetail(state, data) {
     const d = refs.detail; d.textContent = ''; d.classList.add('on'); positionDetail();
-    const head = h('div', 'dhead'); head.append(h('h3', data && data.number ? 'num' : null, (data && data.title) || 'Parcela ovdje'));
+    const head = h('div', 'dhead'); head.append(h('h3', null, (data && data.title) || 'Parcela ovdje'));
     const x = h('button', 'chip-btn x', '✕'); x.onclick = hideDetail; head.append(x); d.append(head);
     if (state === 'loading') d.append(h('div', 'none', 'Učitavam podatke sa sajta…'));
     else if (state === 'empty') {
@@ -1275,7 +1270,6 @@ body .kgrs-force-hide{display:none!important}
     }
     else {
       if (data.sub) d.append(h('div', 'dsub', data.sub));
-      if (data.derived) d.append(h('div', 'dnote', 'Broj izveden iz šifre parcele — uporedite sa brojem na mapi.'));
       const row = (k, v) => { const r = h('div', 'kv'); r.append(h('span', null, k), h('b', null, v)); d.append(r); };
       if (data.area) row('Površina', data.area);
       if (data.vrsta) row('Način korišćenja', data.vrsta);
