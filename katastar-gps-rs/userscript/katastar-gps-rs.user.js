@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.8.0
+// @version      0.9.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -188,6 +188,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .detail.on{display:block}
 #kgrs .dhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
 #kgrs .dhead h3{margin:0;font-size:16px;font-weight:700}
+#kgrs .diag{margin-top:8px;font-size:10px;line-height:1.4;color:#6f737e;overflow-wrap:anywhere}
 #kgrs .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07);font-size:13px;color:#9aa0ac}
 #kgrs .kv b{color:#f2f3f5;text-align:right;overflow-wrap:anywhere;font-weight:600}
 #kgrs .detail .chip-btn.acc{margin-top:8px;width:100%;justify-content:center}
@@ -249,6 +250,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .none{color:#9aa0ac;font-size:13px;padding:6px 2px}
 #kgrsmap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147482000;background:#0c0d10;overflow:hidden}
 body .kgrs-force-hide{display:none!important}
+#kgrsmap.kgrs-ovl-hidden .ol-overlay-container{visibility:hidden!important}
 #kgrsmap .ol-rotate,#kgrsmap .ol-attribution,#kgrsmap .ol-zoom{display:none!important}
 #kgrs .rail{position:absolute;right:10px;top:calc(60px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:8px}
 #kgrs .rail .rb{font-size:20px;font-weight:600}
@@ -872,23 +874,31 @@ body .kgrs-force-hide{display:none!important}
   }
   let forcedHidden = [];
   function unforce() { forcedHidden.forEach((e) => e.classList.remove('kgrs-force-hide')); forcedHidden = []; }
+  /** Sloj koji gutaa dodire: fixed element (unutar stranice bilo koje velicine, izvan nje veci dio ekrana) ili aktivni dimmer. */
+  function isBlocker(e, da, precise) {
+    if (!e || e === document.body || e === document.documentElement || e === da) return false;
+    if (e.closest('#kgrs') || e.closest('#kgrsmap') || e.closest('.kgrs-rc-wrap') || e.closest('#kgrs-toast')) return false;
+    const cs = getComputedStyle(e); if (cs.pointerEvents === 'none' || cs.display === 'none' || cs.visibility === 'hidden') return false;
+    const r = e.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return false;
+    if (precise && !(da && da.contains(e))) return true;                  // tacno na mjestu dodira: sve iznad stranice guta dodir, bez obzira na velicinu
+    const big = r.width >= innerWidth * 0.4 && r.height >= innerHeight * 0.25;
+    if (cs.position === 'fixed') return da && da.contains(e) ? true : big;   // unutar stranice fixed ne bi trebalo da postoji
+    return /(^|\s)dimmer(\s|$)/.test(typeof e.className === 'string' ? e.className : '') && big;
+  }
+  function hideBlocker(e) { if (!e.classList.contains('kgrs-force-hide')) { e.classList.add('kgrs-force-hide'); forcedHidden.push(e); } }
+  function blockersAt(x, y, precise) {
+    const da = document.getElementById('d_all'), out = [];
+    for (const e of document.elementsFromPoint(x, y)) { if (e === da) break; if (isBlocker(e, da, precise)) out.push(e); }
+    return out;
+  }
   /** Safety net: nakon zatvaranja mape ne smije ostati nijedan sloj preko stranice koji guta dodire. */
   function unfreeze() {
     if (mounted) return;
     const da = document.getElementById('d_all');
     if (da) { da.style.setProperty('overflow-y', 'auto', 'important'); da.style.setProperty('overflow-x', 'hidden', 'important'); }
     document.body.classList.remove('dimmed', 'dimmable', 'scrolling');
-    [[0.5, 0.5], [0.5, 0.25], [0.5, 0.8], [0.15, 0.5]].forEach(([fx, fy]) => {
-      for (const e of document.elementsFromPoint(innerWidth * fx, innerHeight * fy)) {
-        if (da && (e === da || da.contains(e))) break;                 // stigli smo do sadrzaja: ispod nema blokera
-        if (e === document.body || e === document.documentElement) break;
-        if (e.closest('#kgrs') || e.closest('.kgrs-rc-wrap')) continue;  // nas prekrivac / otvoren reCAPTCHA izazov
-        const r = e.getBoundingClientRect();
-        if (r.width >= innerWidth * 0.8 && r.height >= innerHeight * 0.5 && getComputedStyle(e).pointerEvents !== 'none') {
-          e.classList.add('kgrs-force-hide'); forcedHidden.push(e);
-        }
-      }
-    });
+    [[0.5, 0.5], [0.5, 0.25], [0.5, 0.8], [0.15, 0.5], [0.85, 0.5]].forEach(([fx, fy]) => blockersAt(innerWidth * fx, innerHeight * fy).forEach(hideBlocker));
+    document.querySelectorAll('.ui.dimmer, .dimmer, .ui.modal, .modals, [style*="position: fixed"], [style*="position:fixed"]').forEach((e) => { if (isBlocker(e, da)) hideBlocker(e); });
   }
   function closeMap() {
     const t = mounted && mounted.t;
@@ -899,7 +909,7 @@ body .kgrs-force-hide{display:none!important}
     const b = (modal && all.find((x) => modal.contains(x))) || all.find(visibleEl) || all[0];
     if (b) b.click();
     setTimeout(() => ensureClosed(modal, t), 700);
-    setTimeout(unfreeze, 1700); setTimeout(unfreeze, 3500);
+    setTimeout(unfreeze, 1700); setTimeout(unfreeze, 3500); setTimeout(unfreeze, 7000);
   }
   // Ako se njihov modal ipak nije zatvorio (a ostavlja zatamnjenje koje blokira dodire), zatvaramo ga preko jQuery-ja, pa na silu.
   function ensureClosed(modal, t) {
@@ -997,8 +1007,13 @@ body .kgrs-force-hide{display:none!important}
   /* DETALJI PARCELE (GetFeatureInfo njihovog WMS-a, kao da kliknemo na mapu) */
   /* ------------------------------------------------------------------ */
   const INFO_FORMATS = ['application/json', 'application/geojson', 'application/vnd.ogc.gml', 'text/html', 'text/plain'];
-  const FRIENDLY = [[/^(parcela|br_?parc\w*|brparc|parcel\w*|broj|parc_?br\w*)$/i, 'Parcela'], [/^(ko|kat_?opstina|katastarska_?opstina|ko_?naziv|kat\w*op\w*)$/i, 'Katastarska opština'],
-    [/^(povrsina|površina|pov|area|shape_?area|p_?ukupno|povrsina_?m2)$/i, 'Površina'], [/^(list|br_?lista|brlist\w*)$/i, 'List'], [/^(opstina|općina|opština)$/i, 'Opština'], [/^(vlasnik\w*|posjednik\w*|nosilac\w*)$/i, 'Vlasnik']];
+  const FRIENDLY = [
+    [/^(parcela|br_?parc\w*|brparc|parcel\w*|broj|parc_?br\w*|парцела|парцеле|број парцеле|бр\.? ?парцеле|парц\w*)$/i, 'Parcela'],
+    [/^(ko|kat_?opstina|katastarska_?opstina|ko_?naziv|kat\w*op\w*|ко|кат\.? ?општина|катастарска општина|к\.? ?о\.?)$/i, 'Katastarska opština'],
+    [/^(povrsina|površina|pov|area|shape_?area|p_?ukupno|povrsina_?m2|површина|површина парцеле|пов\.?|повр\.?)$/i, 'Površina'],
+    [/^(list|br_?lista|brlist\w*|лист|број листа|бр\.? ?листа|пл)$/i, 'List'],
+    [/^(opstina|općina|opština|општина|град\/општина|град)$/i, 'Opština'],
+    [/^(vlasnik\w*|posjednik\w*|nosilac\w*|власник\w*|носилац\w*|посједник\w*|носиоци права)$/i, 'Vlasnik']];
   const SKIP = /^(geom|geometry|shape|the_geom|boundedby|objectid|fid|gid|id|shape_?length|shape_?len\w*|st_\w+|msgeometry|bbox|featuretype|layer|type|crs|pos|poslist|coordinates|lowercorner|uppercorner)$/i;
   function pairsFromObj(o, out) {
     Object.keys(o || {}).forEach((k) => { const v = o[k]; if (SKIP.test(k) || v === null || v === undefined || typeof v === 'object' || String(v).trim() === '' || String(v).length > 140) return; out.push([k, String(v).trim()]); });
@@ -1058,7 +1073,10 @@ body .kgrs-force-hide{display:none!important}
     const head = h('div', 'dhead'); head.append(h('h3', null, (data && data.title) || 'Parcela ovdje'));
     const x = h('button', 'chip-btn x', '✕'); x.onclick = hideDetail; head.append(x); d.append(head);
     if (state === 'loading') d.append(h('div', 'none', 'Učitavam podatke sa sajta…'));
-    else if (state === 'empty') d.append(h('div', 'none', 'Sajt ne vraća podatke za ovu tačku. Dodirnite tačno na parcelu, ili pretražite broj parcele (tamo su i vlasnici).'));
+    else if (state === 'empty') {
+      d.append(h('div', 'none', 'Sajt ne vraća podatke za ovu tačku. Dodirnite tačno na parcelu, ili pretražite broj parcele (tamo su i vlasnici).'));
+      if (data && data.diag && data.diag.length) d.append(h('div', 'diag', data.diag.slice(0, 9).join(' · ')));
+    }
     else {
       data.pairs.forEach(([k, v]) => { const r = h('div', 'kv'); r.append(h('span', null, k), h('b', null, v)); d.append(r); });
       if (data.number) { const b = h('button', 'chip-btn acc', 'Pretraži parcelu ' + data.number + ' (vlasnici)'); b.onclick = () => searchThis(data.number); d.append(b); }
@@ -1073,29 +1091,72 @@ body .kgrs-force-hide{display:none!important}
     hideDetail(); closeMap();
     setTimeout(() => { const da = document.getElementById('d_all'); if (da) da.scrollTo(0, 0); toast('Broj parcele <b>' + num + '</b> je upisan. Potvrdite „Нисам робот“ i pritisnite <b>Претражи</b>.', 7000); }, 900);
   }
-  async function queryAt(coord) {
-    const map = getMap(); if (!map) return;
-    const my = ++qSeq; tapCoord = coord; addTap(); showDetail('loading');
+  /** Tekst iz njihovih OpenLayers overlay-a (tooltip/popup koji njihov kod prikaze na dodir parcele). */
+  function overlayTexts(map) {
+    const out = [];
+    (map.getOverlays ? map.getOverlays().getArray() : []).forEach((o) => {
+      const el = o.getElement && o.getElement(); if (!el || el.closest('#kgrs')) return;
+      if (o.getPosition && !o.getPosition()) return;                                     // nije prikazan
+      const t = ((el.innerText || el.textContent || '').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n')).trim();
+      if (t && t.length < 700) out.push(t);
+    });
+    return out;
+  }
+  function pairsFromText(text) {
+    const out = [];
+    text.split(/\n+/).forEach((l, i) => {
+      l = l.trim(); if (!l) return;
+      const m = l.match(/^([^:=]{2,32})\s*[:=]\s*(.{1,120})$/);
+      if (m) out.push([m[1].trim(), m[2].trim()]); else if (out.length < 8) out.push([i === 0 ? 'Sa sajta' : '', l]);
+    });
+    return out;
+  }
+  /** Ceka da njihov kod prikaze tooltip (asinhrono) i vraca prvi novi tekst. */
+  function waitOverlay(map, before, my) {
+    return new Promise((resolve) => {
+      const t0 = Date.now();
+      const tick = () => {
+        if (my !== qSeq) return resolve(null);
+        const now = overlayTexts(map).find((t) => !before.includes(t));
+        if (now) return resolve(pairsFromText(now));
+        if (Date.now() - t0 > 4000) return resolve(null);                                // 4 s po satu
+        setTimeout(tick, 250);
+      };
+      setTimeout(tick, 200);
+    });
+  }
+  async function gfiQuery(map, coord, my, diag) {
     const v = map.getView(), res = v.getResolution(), proj = v.getProjection();
     const rank = (l) => { const t = l.get('title') || ''; return /^Парцеле/.test(t) ? 3 : /^Катастарска/.test(t) ? 2 : l.getVisible() ? 1 : 0; };
     const layers = allLayers(map.getLayers(), []).filter((l) => { const so = l.getSource && l.getSource(); return so && typeof so.getFeatureInfoUrl === 'function'; }).sort((a, b) => rank(b) - rank(a)).slice(0, 2);
+    diag.push('WMS slojeva sa GetFeatureInfo: ' + layers.length);
     const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 12000);
     try {
       for (const l of layers) {
-        if (my !== qSeq) return;
-        // svi formati odjednom (server prihvata onaj koji podrzava); biramo prvi sa podacima po prioritetu
+        if (my !== qSeq) return null;
         const results = await Promise.all(INFO_FORMATS.map(async (fmt) => {
           try {
-            const url = l.getSource().getFeatureInfoUrl(coord, res, proj, { INFO_FORMAT: fmt, FEATURE_COUNT: 5 }); if (!url) return [];
-            const r = await fetch(url, { credentials: 'include', signal: ctl.signal }); if (!r.ok) return [];
-            return parseInfo(await r.text());
-          } catch (e) { return []; }
+            const url = l.getSource().getFeatureInfoUrl(coord, res, proj, { INFO_FORMAT: fmt, FEATURE_COUNT: 5 }); if (!url) { diag.push((l.get('title') || '?') + ' ' + fmt.split('/')[1] + ': nema URL'); return []; }
+            const r = await fetch(url, { credentials: 'include', signal: ctl.signal });
+            const txt = r.ok ? await r.text() : ''; const pr = r.ok ? parseInfo(txt) : [];
+            diag.push((l.get('title') || '?') + ' ' + fmt.split('/')[1] + ': ' + r.status + ', ' + txt.length + ' B' + (pr.length ? ', ' + pr.length + ' polja' : ''));
+            return pr;
+          } catch (e) { diag.push((l.get('title') || '?') + ' ' + fmt.split('/')[1] + ': greška'); return []; }
         }));
-        const pairs = results.find((x) => x.length);
-        if (pairs) { if (my === qSeq) showDetail('ok', buildDetail(pairs)); return; }
+        const pairs = results.find((x) => x.length); if (pairs) return pairs;
       }
     } finally { clearTimeout(to); }
-    if (my === qSeq) showDetail('empty');
+    return null;
+  }
+  async function queryAt(coord) {
+    const map = getMap(); if (!map) return;
+    const my = ++qSeq; tapCoord = coord; addTap();
+    if (mounted) mounted.c.classList.remove('kgrs-ovl-hidden');                           // njihov tooltip mora biti "vidljiv" da ga procitamo
+    showDetail('loading');
+    const before = overlayTexts(map), diag = []; let shown = false;
+    const done = (pairs) => { if (pairs && pairs.length && !shown && my === qSeq) { shown = true; showDetail('ok', buildDetail(pairs)); if (mounted) mounted.c.classList.add('kgrs-ovl-hidden'); } };
+    await Promise.all([gfiQuery(map, coord, my, diag).then(done), waitOverlay(map, before, my).then((p) => { if (!p) diag.push('Njihov tooltip: ništa u 4 s'); else diag.push('Njihov tooltip: pročitan'); done(p); })]).catch(() => {});
+    if (!shown && my === qSeq) showDetail('empty', { diag });
   }
   function onMapTap(e) { if (calMode || !mounted) return; queryAt(e.coordinate); }
 
@@ -1109,7 +1170,7 @@ body .kgrs-force-hide{display:none!important}
     if (ms) toastT = setTimeout(() => toastEl.classList.remove('on'), ms);
   }
   const idOf = (e) => (e.id ? '#' + e.id : '') + (typeof e.className === 'string' && e.className.trim() ? '.' + e.className.trim().split(/\s+/).slice(0, 2).join('.') : '') || e.tagName;
-  function runDoctor(t) {
+  function runDoctor(t, x, y) {
     const da = document.getElementById('d_all'), notes = []; if (!da) return notes;
     const cs = getComputedStyle(da);
     if (cs.overflowY !== 'auto' && cs.overflowY !== 'scroll') { da.style.setProperty('overflow-y', 'auto', 'important'); notes.push('overflow-y=' + cs.overflowY); }
@@ -1120,12 +1181,8 @@ body .kgrs-force-hide{display:none!important}
       if (/^(none|pan-x|pinch-zoom)$/.test(c.touchAction)) { e.style.setProperty('touch-action', 'pan-y', 'important'); notes.push('touch-action:' + c.touchAction + ' na ' + idOf(e)); }
     }
     if (notes.some((n) => /^touch-action/.test(n))) addStyle('kgrs-ta-all', 'html body #d_all,html body #d_all *{touch-action:pan-y pinch-zoom!important}');   // cijela stranica, ne samo lanac ispod prsta
-    if (t && !da.contains(t) && t !== document.body && t !== document.documentElement && !t.closest('#kgrs')) {
-      for (let e = t; e && e !== document.body; e = e.parentElement) {
-        const c = getComputedStyle(e);
-        if (c.position === 'fixed' || c.position === 'absolute') { e.classList.add('kgrs-force-hide'); forcedHidden.push(e); notes.push('sloj preko stranice: ' + idOf(e)); break; }
-      }
-    }
+    blockersAt(x, y, true).forEach((e) => { hideBlocker(e); notes.push('sloj preko stranice: ' + idOf(e)); });
+    document.querySelectorAll('.ui.dimmer, .dimmer, .ui.modal, .modals, [style*="position: fixed"], [style*="position:fixed"]').forEach((e) => { if (isBlocker(e, da)) { hideBlocker(e); notes.push('sloj: ' + idOf(e)); } });
     document.body.classList.remove('dimmed', 'dimmable', 'scrolling');
     return notes;
   }
@@ -1146,7 +1203,7 @@ body .kgrs-force-hide{display:none!important}
       if (moved || atEdge) { stuckN = 0; return; }
       if (++stuckN < 2) return;
       stuckN = 0;
-      const notes = runDoctor(s.target);
+      const notes = runDoctor(s.target, s.x, s.y);
       toast(notes.length ? 'Skrol je bio blokiran, popravljeno: <b>' + notes.join('; ') + '</b>. Pokušajte ponovo.'
         : 'Skrol ne reaguje (uzrok nije nađen). <button id="kgrs-reload">Osvježi stranicu</button>', notes.length ? 9000 : 0);
       const rb = document.getElementById('kgrs-reload'); if (rb) rb.onclick = () => location.reload();

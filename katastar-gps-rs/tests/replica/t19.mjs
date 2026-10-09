@@ -24,7 +24,7 @@ const detail = (p) => p.evaluate(() => { const d = document.querySelector('#kgrs
 console.log('1) DETALJI NA DODIR NA MAPU (razni odgovori servera)');
 for (const [m, expect] of [['gml', /Parcela 6452.*Površina \| 812 m².*Katastarska opština.*Pretraži parcelu 6452/s], ['html', /Parcela 1\/3.*455 m²/s], ['json', /Parcela 88\/2.*1200\.5 m²/s], ['empty', /Sajt ne vraća podatke/]]) {
   mode.v = m; asked.length = 0; const { ctx, p } = await fresh();
-  await p.mouse.click(120, 300); await p.waitForTimeout(2800);
+  await p.mouse.click(120, 300); await p.waitForTimeout(m === 'empty' ? 9000 : 2800);
   const d = await detail(p); note(!!d && expect.test(d), `${m}: ${d ? d.slice(0, 150) : 'nema kartice'} [format upiti: ${asked.join(', ')}]`);
   if (m === 'gml') { await p.screenshot({ path: 'det-gml.png' });
     note(!/OBJECTID|boundedBy|the_geom/i.test(d), 'tehnicka polja (geometrija/OBJECTID) sakrivena');
@@ -66,7 +66,7 @@ const cdpSwipe = async (ctx, p, dy) => { const c = await ctx.newCDPSession(p); c
   await T('touchStart', y0); for (let i = 1; i <= 10; i++) { await T('touchMove', y0 + (y1 - y0) * i / 10); await p.waitForTimeout(16); } await T('touchEnd', y1); await p.waitForTimeout(700); await c.detach(); };
 for (const [name, breakIt, expectRe] of [
   ['touch-action:none na stranici', () => { const s = document.createElement('style'); s.id = 'brk'; s.textContent = '#d_all,#d_all *{touch-action:none!important}'; document.head.appendChild(s); }, /touch-action:none|popravljeno/i],
-  ['providni sloj preko sredine ekrana', () => { document.body.insertAdjacentHTML('beforeend', '<div id="ghost" style="position:fixed;left:15%;top:40%;width:70%;height:40%;z-index:99999;background:transparent"></div>'); }, /sloj preko stranice/i]]) {
+  ['providni sloj preko sredine ekrana', () => { document.body.insertAdjacentHTML('beforeend', '<div id="ghost" style="position:fixed;left:35%;top:72%;width:30%;height:10%;z-index:99999;background:transparent"></div>'); }, /sloj preko stranice/i]]) {
   const { ctx, p } = await fresh('ekatastar-close.html');
   await p.click('#kgrs .top .rb'); await p.waitForTimeout(1500);
   await p.evaluate(() => document.getElementById('d_all').scrollTo(0, 400));
