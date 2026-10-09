@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      1.0.0
+// @version      1.1.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -187,7 +187,14 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .detail{position:absolute;left:10px;right:10px;bottom:calc(190px + env(safe-area-inset-bottom));max-height:42vh;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:20px;padding:10px 14px 12px;display:none;pointer-events:auto}
 #kgrs .detail.on{display:block}
 #kgrs .dhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
-#kgrs .dhead h3{margin:0;font-size:16px;font-weight:700}
+#kgrs .dhead h3{margin:0;font-size:16px;font-weight:700;color:#f2f3f5!important;font-family:inherit!important;letter-spacing:0}
+#kgrs h3,#kgrs h4{color:#f2f3f5}
+#kgrs .dsub{font-size:12px;color:#9aa0ac;margin:-2px 0 6px}
+#kgrs .owners-box{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07)}
+#kgrs .okey{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9aa0ac;margin-bottom:4px}
+#kgrs .dnote{font-size:11px;line-height:1.4;color:#6f737e;margin-top:6px}
+#kgrs .dmore{width:100%;margin-top:8px;padding:8px 2px;background:transparent;color:#6f737e;font-size:12px;text-align:left}
+#kgrs .dall .kv{font-size:11px}
 #kgrs .diag{margin-top:8px;font-size:10px;line-height:1.4;color:#6f737e;overflow-wrap:anywhere}
 #kgrs .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07);font-size:13px;color:#9aa0ac}
 #kgrs .kv b{color:#f2f3f5;text-align:right;overflow-wrap:anywhere;font-weight:600}
@@ -1061,7 +1068,7 @@ body .kgrs-force-hide{display:none!important}
   /* ------------------------------------------------------------------ */
   const INFO_FORMATS = ['application/json', 'application/geojson', 'application/vnd.ogc.gml', 'text/html', 'text/plain'];
   const FRIENDLY = [
-    [/^(parcela|br_?parc\w*|brparc|parcel\w*|broj|parc_?br\w*|парцела|парцеле|број парцеле|бр\.? ?парцеле|парц\w*)$/i, 'Parcela'],
+    [/^(parcela|br_?parc\w*|brparc|parcel\w*|broj|broj_?parc\w*|parc\w*_?broj|parc_?br\w*|парцела|парцеле|број парцеле|бр\.? ?парцеле|парц\w*)$/i, 'Parcela'],
     [/^(ko|kat_?opstina|katastarska_?opstina|ko_?naziv|kat\w*op\w*|ко|кат\.? ?општина|катастарска општина|к\.? ?о\.?)$/i, 'Katastarska opština'],
     [/^(povrsina|površina|pov|area|shape_?area|p_?ukupno|povrsina_?m2|површина|површина парцеле|пов\.?|повр\.?)$/i, 'Površina'],
     [/^(list|br_?lista|brlist\w*|лист|број листа|бр\.? ?листа|пл)$/i, 'List'],
@@ -1103,19 +1110,21 @@ body .kgrs-force-hide{display:none!important}
     t.split(/\n+/).forEach((l) => { const m = l.match(/^\s*([^:=]{2,40})\s*[:=]\s*(.{1,100})$/); if (m && !SKIP.test(m[1].trim())) out.push([m[1].trim(), m[2].trim()]); });
     return out;
   }
+  const VRSTA_RE = /kultur|klas|vrst|nacin|način|koris|namjen|upotreb|врста|култура|начин|класа/i;
   function buildDetail(pairs) {
-    const seen = new Set(), rows = []; let number = '';
+    const seen = new Set(), all = []; let area = '', vrsta = '', koName = '', koCode = '', lokacija = '', number = '';
     pairs.forEach(([k, v]) => {
       const key = k.toLowerCase(); if (seen.has(key)) return; seen.add(key);
-      const f = FRIENDLY.find((x) => x[0].test(k)); const label = f ? f[1] : k;
-      let val = v; if (label === 'Površina' && /^[\d.,]+$/.test(v)) val = v + ' m²';
-      if (label === 'Parcela' && !number) number = v;
-      rows.push([label, val]);
+      all.push([k, v]);
+      const f = FRIENDLY.find((x) => x[0].test(k)); const label = f ? f[1] : '';
+      if (label === 'Površina' && !area) area = /^[\d.,]+$/.test(v) ? v + ' m²' : v;
+      else if (label === 'Katastarska opština') { if (/^\d+$/.test(v)) koCode = v; else if (!koName) koName = v; }
+      else if (label === 'Parcela' && !number) number = v;
+      else if (/^lokacija$/i.test(k) && !lokacija) lokacija = v;
+      else if (!vrsta && VRSTA_RE.test(k) && !/_?id$/i.test(k)) vrsta = v;
     });
-    const ORD = ['Parcela', 'Površina', 'Katastarska opština', 'Opština', 'List', 'Vlasnik'], rk = (k) => (ORD.indexOf(k) < 0 ? 99 : ORD.indexOf(k));
-    rows.sort((a, b) => rk(a[0]) - rk(b[0]));
-    const shown = number ? rows.filter((r) => r[0] !== 'Parcela') : rows;   // broj je vec u naslovu
-    return { pairs: shown.slice(0, 14), number, title: number ? 'Parcela ' + number : 'Parcela ovdje' };
+    const plausible = /^\d{1,6}(\/\d{1,4})?$/.test(number);                       // dugi interni ID-evi nisu broj parcele
+    return { title: plausible ? 'Parcela ' + number : 'Parcela', sub: koName, area, vrsta, number: plausible ? number : '', koName, koCode, lokacija, all };
   }
   function positionDetail() {
     const sh = refs.sheet.getBoundingClientRect();
@@ -1131,18 +1140,75 @@ body .kgrs-force-hide{display:none!important}
       if (data && data.diag && data.diag.length) d.append(h('div', 'diag', data.diag.slice(0, 12).join(' · ')));
     }
     else {
-      data.pairs.forEach(([k, v]) => { const r = h('div', 'kv'); r.append(h('span', null, k), h('b', null, v)); d.append(r); });
-      if (data.number) { const b = h('button', 'chip-btn acc', 'Pretraži parcelu ' + data.number + ' (vlasnici)'); b.onclick = () => searchThis(data.number); d.append(b); }
+      if (data.sub) d.append(h('div', 'dsub', data.sub));
+      const row = (k, v) => { const r = h('div', 'kv'); r.append(h('span', null, k), h('b', null, v)); d.append(r); };
+      if (data.area) row('Površina', data.area);
+      if (data.vrsta) row('Vrsta', data.vrsta);
+      if (!data.area && !data.vrsta) d.append(h('div', 'none', 'Sajt nije vratio površinu ni vrstu za ovu tačku.'));
+      // vlasnici: ako je ovo ista parcela koju smo pretrazili, vec ih imamo; inace idu preko njihove pretrage
+      const same = parcel && parcel.vlasnici.length && data.number && parcel.broj === data.number && data.koName && latToCyr(data.koName).toLowerCase() === (parcel.ko || '').toLowerCase();
+      const ob = h('div', 'owners-box'); ob.append(h('div', 'okey', 'Vlasnici'));
+      if (same) parcel.vlasnici.forEach(([ime, udio]) => { const r = h('div', 'kv'); r.append(h('span', null, ime), h('b', null, udio)); ob.append(r); });
+      else {
+        const b = h('button', 'chip-btn acc', 'Vlasnici · pretraži'); b.onclick = () => startSearchFlow(data); ob.append(b);
+        ob.append(h('div', 'dnote', 'Vlasnici su samo u njihovoj pretrazi: popunim polja, vi potvrdite „Нисам робот“, ostalo ide samo.'));
+      }
+      d.append(ob);
+      const more = h('button', 'dmore', 'Svi podaci sa sajta ▾'); const box = h('div', 'dall'); box.style.display = 'none';
+      data.all.forEach(([k, v]) => { const r = h('div', 'kv'); r.append(h('span', null, k), h('b', null, v)); box.append(r); });
+      more.onclick = () => { const o = box.style.display === 'none'; box.style.display = o ? '' : 'none'; more.textContent = 'Svi podaci sa sajta ' + (o ? '▴' : '▾'); };
+      d.append(more, box);
     }
   }
   let qSeq = 0;
   function hideDetail() { refs.detail.classList.remove('on'); qSeq++; clearTap(); }
-  /** Prebaci broj parcele u njihovu pretragu (vlasnici zahtijevaju njihovu pretragu i captchu). */
-  function searchThis(num) {
-    const inp = document.getElementById('i_parc');
-    if (inp) { inp.value = num; inp.dispatchEvent(new Event('input', { bubbles: true })); }
+  /* ---- tok "Vlasnici": popunimo njihovu pretragu, korisnik potvrdi „Нисам робот“, mi pritisnemo Претражи i otvorimo parcelu ---- */
+  let pendingSearch = null;
+  const setField = (el, val) => { el.value = val; ['input', 'change'].forEach((t) => el.dispatchEvent(new Event(t, { bubbles: true }))); };
+  function setDropdown(id, value) {
+    const sel = document.getElementById(id); if (!sel) return false;
+    const dd = sel.closest('.ui.dropdown'), $ = window.jQuery;
+    try { if ($ && dd && $.fn && $.fn.dropdown) { $(dd).dropdown('set selected', value); return true; } } catch (e) { /* rezerva ispod */ }
+    sel.value = value; sel.dispatchEvent(new Event('change', { bubbles: true })); return true;
+  }
+  async function prefillSearch(info) {
+    const tab = document.querySelector('.ui.pointing.menu .item[data-tab="first"]'); if (tab && !tab.classList.contains('active')) tab.click();
+    const notes = [], inp = document.getElementById('i_parc');
+    if (inp && info.number) { setField(inp, info.number); notes.push('broj parcele'); }                       // prvo broj (odmah)
+    if (info.lokacija && setDropdown('ddlPP', info.lokacija)) notes.push('opština');
+    if (info.koName) {
+      const want = latToCyr(info.koName).toLowerCase(); let ok = false;
+      for (let i = 0; i < 28 && !ok; i++) {                                                                  // lista KO se ucitava nakon izbora opstine
+        const sel = document.getElementById('ddlKO'), opt = sel && [...sel.options].find((o) => o.value.toLowerCase() === want || o.text.trim().toLowerCase() === want);
+        if (opt) { setDropdown('ddlKO', opt.value); ok = true; } else await new Promise((r) => setTimeout(r, 250));
+      }
+      notes.push(ok ? 'katastarska opština' : '<b>katastarsku opštinu izaberite sami</b> (' + info.koName + ')');
+    }
+    return notes;
+  }
+  function startSearchFlow(info) {
     hideDetail(); closeMap();
-    setTimeout(() => { const da = document.getElementById('d_all'); if (da) da.scrollTo(0, 0); toast('Broj parcele <b>' + num + '</b> je upisan. Potvrdite „Нисам робот“ i pritisnite <b>Претражи</b>.', 7000); }, 900);
+    pendingSearch = { num: info.number || '', t0: Date.now(), clicked: false, sig: '', tc: 0 };
+    setTimeout(async () => {
+      const da = document.getElementById('d_all'); if (da) da.scrollTo(0, 0);
+      const notes = await prefillSearch(info);
+      toast('Popunjeno: ' + (notes.join(', ') || 'ništa') + '. Potvrdite <b>„Нисам робот“</b>, a pretraga i otvaranje parcele sa vlasnicima idu sami.' + (info.number ? '' : ' <b>Upišite broj parcele</b> (kao na mapi).'), 14000);
+    }, 1000);
+  }
+  function searchFlowTick() {
+    const ps = pendingSearch; if (!ps) return;
+    if (Date.now() - ps.t0 > 240000) { pendingSearch = null; return; }
+    const btn = document.getElementById('btnKC'), inp = document.getElementById('i_parc'), box = document.getElementById('d_info');
+    if (!ps.clicked) {
+      // njihov kod ukljuci dugme tek kad je captcha rijesena; tada ga mi pritisnemo
+      if (btn && !btn.classList.contains('disabled') && !btn.disabled && inp && inp.value.trim()) { ps.sig = box ? box.innerText : ''; ps.clicked = true; ps.tc = Date.now(); btn.click(); }
+      return;
+    }
+    const rows = [...document.querySelectorAll('#d_info table[id^=parc_] tbody tr')].filter((tr) => tr.querySelector('button[onclick*="jumpTo"]') && !tr.classList.contains('kgrs-dup'));
+    if (rows.length && (box ? box.innerText : '') !== ps.sig) {
+      const row = rows.find((tr) => ps.num && txt(tr.children[0]) === ps.num) || rows[0];
+      pendingSearch = null; if (toastEl) toastEl.classList.remove('on'); row.querySelector('button[onclick*="jumpTo"]').click();     // otvara mapu; panel prikazuje vlasnike
+    } else if (Date.now() - ps.tc > 25000) { pendingSearch = null; toast('Pretraga nije vratila rezultat. Pokušajte ponovo.', 6000); }
   }
   /** Tekst iz njihovih OpenLayers overlay-a (tooltip/popup koji njihov kod prikaze na dodir parcele). */
   function overlayTexts(map) {
@@ -1318,7 +1384,7 @@ body .kgrs-force-hide{display:none!important}
     prepPage(); tidy(); buildUi();
     let tt = 0; const mo = new MutationObserver(() => { clearTimeout(tt); tt = setTimeout(tidy, 250); });
     mo.observe(document.body, { childList: true, subtree: true });
-    setInterval(() => { try { sync(); fixRecaptcha(); fixTabs(); } catch (e) { /* ok */ } }, 500);
+    setInterval(() => { try { sync(); fixRecaptcha(); fixTabs(); searchFlowTick(); } catch (e) { /* ok */ } }, 500);
     setInterval(() => { if (watchId !== null && raw) { try { refreshStatus(); } catch (e) { /* ok */ } } }, 1500);
   }
   // tema se postavlja odmah (prije cekanja na ol), da stranica ne "bljesne" bijelo

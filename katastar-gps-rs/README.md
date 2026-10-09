@@ -26,6 +26,11 @@ Mobilna web aplikacija (PWA) za hodanje po placu uz GPS: prikaz parcela na satel
 - **Zamrzavanje skrola:** uzrok je bio providni `position:fixed` sloj (dimmer) unutar same stranice, koji ne propušta skrol roditelju. Zaštita ga traži i unutar stranice, a na mjestu dodira i svaki mali sloj iznad nje.
 - Dugme Kreni/Stop: staklasti disk sa kružnim lukom, ▶ / spinner / ■ i zeleni puls.
 
+## Vlasnici (v1.1)
+- Kartica za dodirnutu parcelu pokazuje samo površinu, vrstu i vlasnike (ostalo je iza „Svi podaci sa sajta“).
+- Vlasnici nisu u podacima sa mape, nego samo u njihovoj pretrazi koja traži reCAPTCHA-u. Aplikacija **ne zaobilazi** captchu: popuni opštinu, katastarsku opštinu i broj parcele, korisnik potvrdi „Нисам робот“, pa se sama pritisne „Претражи“ i parcela otvori na mapi (panel sa vlasnicima).
+- Za rad bez captche potreban je zvaničan pristup (nalog registrovanog korisnika / zahtjev RGURS-u).
+
 ## Živa tačka i filter (v1.0)
 - Zelena tačka je DOM overlay (ne vektor): animira se na 60 fps nezavisno od GPS-a, klizi između očitavanja (predviđanje po brzini), a mapa se pomjera tek kad tačka ode ~70 px od centra. Petlja staje kad sve konvergira.
 - Filter pozicije sa brzinom (konstantna brzina po osi): kašnjenje pri hodanju ~0.4 m (ranije ~5 m).

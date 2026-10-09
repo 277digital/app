@@ -22,14 +22,14 @@ const fresh = async (page = 'ekatastar-wms.html') => { const ctx = await mkctx()
 const detail = (p) => p.evaluate(() => { const d = document.querySelector('#kgrs .detail'); return d.classList.contains('on') ? d.innerText.replace(/\n+/g, ' | ') : null; });
 
 console.log('1) DETALJI NA DODIR NA MAPU (razni odgovori servera)');
-for (const [m, expect] of [['gml', /Parcela 6452.*Površina \| 812 m².*Katastarska opština.*Pretraži parcelu 6452/s], ['html', /Parcela 1\/3.*455 m²/s], ['json', /Parcela 88\/2.*1200\.5 m²/s], ['empty', /Sajt ne vraća podatke/]]) {
+for (const [m, expect] of [['gml', /Parcela 6452.*Površina \| 812 m².*Vlasnici/s], ['html', /Parcela 1\/3.*455 m²/s], ['json', /Parcela 88\/2.*1200\.5 m²/s], ['empty', /Sajt ne vraća podatke/]]) {
   mode.v = m; asked.length = 0; const { ctx, p } = await fresh();
   await p.mouse.click(120, 300); await p.waitForTimeout(m === 'empty' ? 9000 : 2800);
   const d = await detail(p); note(!!d && expect.test(d), `${m}: ${d ? d.slice(0, 150) : 'nema kartice'} [format upiti: ${asked.join(', ')}]`);
   if (m === 'gml') { await p.screenshot({ path: 'det-gml.png' });
     note(!/OBJECTID|boundedBy|the_geom/i.test(d), 'tehnicka polja (geometrija/OBJECTID) sakrivena');
     await p.click('#kgrs .detail .chip-btn.acc'); await p.waitForTimeout(1500);
-    note(await p.evaluate(() => document.getElementById('i_parc').value === '6452' && !document.getElementById('kgrs').classList.contains('on')), 'Pretrazi parcelu: broj upisan u pretragu, mapa zatvorena, toast: ' + await p.evaluate(() => (document.getElementById('kgrs-toast')||{}).innerText));
+    note(await p.evaluate(() => document.getElementById('i_parc').value === '6452' && !document.getElementById('kgrs').classList.contains('on')), 'Vlasnici: broj upisan u njihovu pretragu, mapa zatvorena');
   }
   note(p.errs.length === 0, m + ': bez JS gresaka ' + p.errs.join(';')); await ctx.close(); }
 

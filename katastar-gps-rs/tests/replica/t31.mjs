@@ -1,0 +1,41 @@
+import { chromium } from 'playwright-core'; import http from 'http'; import fs from 'fs';
+const types={'.js':'text/javascript','.css':'text/css','.html':'text/html'};
+const srv = http.createServer((q, r) => { let u=decodeURIComponent(q.url.split('?')[0]); const f='.'+u; try { const e=f.slice(f.lastIndexOf('.')); r.setHeader('content-type',types[e]||'application/octet-stream'); r.end(fs.readFileSync(f)); } catch { r.statusCode = 404; r.end(); } }).listen(8160);
+const b = await chromium.launch({ ...(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}), args: ['--no-sandbox'] });
+const USER = new URL('../../userscript/katastar-gps-rs.user.js', import.meta.url).pathname;
+const fails = []; const note = (ok, msg) => { if (!ok) fails.push(msg); console.log(ok ? '  ok  ' : '  FAIL', msg); };
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+const JSONR = JSON.stringify({ features: [{ properties: { POVRSINA: '3267', KO_NAZIV: 'Doboj', KO_ID: '20012', LOKACIJA: '34', BROJ_PARC: '512/1', KULTURA: 'Njiva 3. klase', PL_ID: '2001200005981', SREZ: '29' } }] });
+const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, permissions: ['geolocation'], geolocation: { latitude: 44.73045, longitude: 18.0807, accuracy: 4 } });
+const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(e.message));
+await p.route(/\/wms\?/, r => /GetFeatureInfo/i.test(r.request().url()) ? r.fulfill({ status: 200, contentType: 'application/json', body: JSONR }) : r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+await p.goto('http://localhost:8160/ekatastar-wms.html'); await p.addScriptTag({ path: USER }); await p.waitForTimeout(700);
+// simulacija njihove stranice: captcha neriješena (dugme disabled), KO lista se ucitava nakon izbora opstine, pretraga mijenja rezultate
+await p.evaluate(() => {
+  const btn = document.getElementById('btnKC'); btn.classList.add('disabled'); document.getElementById('ddlKO').innerHTML = '<option value="">KO</option>';
+  document.getElementById('ddlPP').addEventListener('change', () => setTimeout(() => { document.getElementById('ddlKO').innerHTML = '<option value="">KO</option><option value="Добој">Добој</option><option value="Фоча">Фоча</option>'; }, 900));
+  btn.addEventListener('click', () => { window.__searchClicked = Date.now(); setTimeout(() => { const m = document.createElement('span'); m.textContent = ' novi rezultati'; document.getElementById('d_info').appendChild(m); }, 300); });
+  document.getElementById('i_parc').value = '';
+});
+await p.evaluate(() => document.querySelector('button[onclick*="jumpTo"]').scrollIntoView({ block: 'center' })); await p.click('button[onclick*="jumpTo"]'); await p.waitForTimeout(900);
+await p.mouse.click(120, 300); await p.waitForTimeout(3000);
+const card = await p.evaluate(() => { const d = document.querySelector('#kgrs .detail'); return d.classList.contains('on') ? d.innerText.replace(/\n+/g, ' | ') : null; });
+note(!!card && /Površina \| 3267 m²/.test(card) && /Vrsta \| Njiva 3\. klase/.test(card) && /Vlasnici/.test(card) && !/LOKACIJA|SREZ|PL_ID|KO_ID/.test(card), 'kartica: samo povrsina, vrsta i vlasnici (ostalo sakriveno): ' + (card || 'nema'));
+await p.screenshot({ path: 'owners-card.png' });
+const all = await p.evaluate(() => { const b = document.querySelector('#kgrs .dmore'); b.click(); return document.querySelector('#kgrs .dall').innerText.replace(/\n+/g, ' | '); });
+note(/LOKACIJA/.test(all) && /PL_ID/.test(all), '"Svi podaci" otkrivaju ostala polja: ' + all.slice(0, 90));
+await p.click('#kgrs .owners-box .chip-btn.acc'); await p.waitForTimeout(1500);
+note(await p.evaluate(() => document.getElementById('i_parc').value === '512/1' && !document.getElementById('kgrs').classList.contains('on')), 'Vlasnici: mapa zatvorena, broj parcele 512/1 upisan');
+await p.waitForTimeout(3500);
+const f = await p.evaluate(() => ({ pp: document.getElementById('ddlPP').value, ko: document.getElementById('ddlKO').value, clicked: !!window.__searchClicked, toast: (document.getElementById('kgrs-toast') || {}).innerText }));
+note(f.pp === '34' && f.ko === 'Добој', 'popunjene opstina (34) i katastarska opstina (Добој, iz latinicnog "Doboj")');
+note(!f.clicked, 'dok captcha nije rijesena, pretraga se NE pokrece sama');
+note(/Popunjeno/.test(f.toast || ''), 'obavijest korisniku: ' + (f.toast || '').slice(0, 110));
+await p.evaluate(() => document.getElementById('btnKC').classList.remove('disabled'));       // korisnik je rijesio captchu -> njihov kod ukljuci dugme
+await p.waitForTimeout(2500);
+note(await p.evaluate(() => !!window.__searchClicked), 'nakon sto korisnik rijesi captchu, pretraga se pokrece sama');
+await p.waitForTimeout(2500);
+note(await p.evaluate(() => document.getElementById('kgrs').classList.contains('on')), 'rezultat stize -> parcela se sama otvara na mapi (panel sa vlasnicima)');
+note(p.errs.length === 0, 'bez JS gresaka ' + p.errs.join(';'));
+console.log('\nUKUPNO PROBLEMA:', fails.length); fails.forEach(f => console.log(' -', f));
+await b.close(); srv.close();
