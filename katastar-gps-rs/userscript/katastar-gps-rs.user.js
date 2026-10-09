@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.2.1
+// @version      0.3.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -19,16 +19,22 @@
   const CSS = `
 :root{--bg:#101114;--s1:#1a1b21;--s2:#23252d;--line:#2e3039;--fg:#f2f3f5;--mut:#9aa0ac;--acc:#d9f244;--accfg:#141507;--bad:#ff6b5e;--ok:#58e08a;--warn:#ffb84d;--r:18px}
 html{color-scheme:dark}
-html,body{background:var(--bg)!important;color:var(--fg)!important;overflow-x:hidden!important;max-width:100vw!important;margin:0!important}
+html{background:var(--bg)!important;height:auto!important;overflow:visible!important}
+body{background:var(--bg)!important;color:var(--fg)!important;overflow-x:hidden!important;overflow-y:visible!important;height:auto!important;min-height:100%;max-width:100vw!important;margin:0!important}
 body,#d_all,.ui,.ui.form,.ui.input input,.ui.dropdown{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif!important}
-#d_all{height:auto!important;min-height:100vh;overflow-x:hidden!important;overflow-y:auto!important;background:var(--bg)!important}
+#d_all{height:auto!important;min-height:100vh;overflow:visible!important;background:var(--bg)!important}
 *{-webkit-tap-highlight-color:transparent}
 #wrapper,#content_m,.maincol,.items-row,.item,.ui.container{width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:0!important;float:none!important;box-sizing:border-box!important;background:transparent!important}
 .items-row{padding:0 16px!important}
 .items-row+.items-row{margin-top:6px!important}
-#header{background:linear-gradient(180deg,#1b1e12,var(--bg))!important;height:auto!important;padding:calc(14px + env(safe-area-inset-top)) 16px 12px!important;border:0!important;text-align:center}
-#headerlogo{display:inline-block;background:#fff;border-radius:14px;padding:8px 14px;max-width:calc(100% - 8px);box-sizing:border-box}
-#headerlogo img{display:block;max-width:100%;height:auto;max-height:46px}
+#header,#headerlogo{display:none!important}
+#d_all{padding-top:calc(10px + env(safe-area-inset-top))!important}
+/* naslovi/tekst: bez bijele pozadine koju sajt stavlja iza njih */
+#content_m h1,#content_m h2,#content_m h3,#content_m h2 *,#content_m h3 *,#content_m .item p,#content_m .item p *,#content_m .item,#content_m .items-row,#content_m .maincol,#content_m [style*="background"]:not(.ui):not(.button):not(.label){background:none!important;background-color:transparent!important;background-image:none!important;text-shadow:none!important;box-shadow:none!important}
+#content_m h2,#content_m h2 *,#content_m h3{color:var(--fg)!important}
+html,body{-webkit-text-size-adjust:100%;touch-action:manipulation}
+.ui.button,.ui.dropdown,.ui.menu .item{transition:none!important}
+#d_info .ui.blue.segment,#d_info table,#d_info .ui.attached.message{will-change:auto}
 #content_m h2{color:var(--fg)!important;font-size:22px!important;line-height:1.2;letter-spacing:-.01em;margin:14px 0 6px!important}
 #content_m h2 span,#content_m h2 strong{font-size:inherit!important}
 #content_m .item p,#content_m .item p span{color:var(--mut)!important;font-size:13px!important;text-align:left!important;line-height:1.45}
@@ -62,10 +68,13 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 .ui.message{background:var(--s1)!important;color:var(--mut)!important;border-radius:14px!important;box-shadow:none!important;border:1px solid var(--line)!important;font-size:13px!important}
 .ui.message .header{color:var(--fg)!important}
 .ui.error.message{background:rgba(255,107,94,.12)!important;border-color:rgba(255,107,94,.4)!important;color:#ffc4be!important}
+/* captcha: prozor sa slikama je kod njih apsolutno pozicioniran i izlazi van ekrana; centriramo ga i skaliramo */
+.kgrs-rc-wrap{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important;z-index:2147483600!important}
+.kgrs-rc-box{position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;margin:0!important;transform:scale(var(--rcs,1))!important;transform-origin:center center!important}
 /* captcha */
 #ReCaptchContainer1,#ReCaptchContainer2{max-width:100%;overflow:hidden}
 /* dugmad */
-.ui.blue.button,.ui.blue.buttons .button{background:var(--acc)!important;color:var(--accfg)!important;border-radius:16px!important;font-weight:800!important;min-height:56px;font-size:17px!important;box-shadow:0 6px 24px rgba(217,242,68,.25)!important}
+.ui.blue.button,.ui.blue.buttons .button{background:var(--acc)!important;color:var(--accfg)!important;border-radius:16px!important;font-weight:800!important;min-height:56px;font-size:17px!important;box-shadow:0 4px 14px rgba(217,242,68,.22)!important}
 .ui.button.disabled,.ui.disabled.button{opacity:.35!important;box-shadow:none!important}
 .ui.button{border-radius:14px!important;box-shadow:none!important}
 .ui.basic.button,.ui.button:not(.blue):not(.kgrs-btn){background:var(--s2)!important;color:var(--fg)!important}
@@ -120,27 +129,29 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs *{box-sizing:border-box}
 #kgrs button{font:inherit;color:inherit;border:0;cursor:pointer;pointer-events:auto;-webkit-tap-highlight-color:transparent}
 #kgrs .glass{background:rgba(22,23,28,.92);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 30px rgba(0,0,0,.45)}
-#kgrs .top{position:absolute;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:10px;align-items:center}
-#kgrs .rb{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:20px;flex:none}
-#kgrs .pill{flex:1;min-width:0;height:46px;border-radius:999px;display:flex;align-items:center;gap:10px;padding:0 16px;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden}
-#kgrs .pill .dot{width:10px;height:10px;border-radius:50%;background:#9aa0ac;flex:none}
+#kgrs .top{position:absolute;left:10px;right:10px;top:calc(8px + env(safe-area-inset-top));display:flex;gap:8px;align-items:center;justify-content:space-between}
+#kgrs .right{display:flex;gap:8px;align-items:center;min-width:0}
+#kgrs .rb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:17px;flex:none}
+#kgrs .pill{flex:none;max-width:56vw;height:30px;border-radius:999px;display:flex;align-items:center;gap:7px;padding:0 11px;font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;opacity:.92}
+#kgrs .pill .dot{width:8px;height:8px;border-radius:50%;background:#9aa0ac;flex:none}
 #kgrs .pill.ok .dot{background:#58e08a;box-shadow:0 0 0 4px rgba(88,224,138,.2)}
 #kgrs .pill.warn .dot{background:#ffb84d;box-shadow:0 0 0 4px rgba(255,184,77,.2)}
 #kgrs .pill.bad .dot{background:#ff6b5e;box-shadow:0 0 0 4px rgba(255,107,94,.2)}
-#kgrs .pill small{color:#9aa0ac;font-weight:600;overflow:hidden;text-overflow:ellipsis}
-#kgrs .hint{position:absolute;left:12px;right:12px;top:calc(68px + env(safe-area-inset-top));padding:12px 14px;border-radius:16px;font-size:14px;line-height:1.35;display:none}
+#kgrs .pill small{display:none}
+#kgrs .hint{position:absolute;left:12px;right:12px;top:calc(56px + env(safe-area-inset-top));padding:12px 14px;border-radius:16px;font-size:14px;line-height:1.35;display:none}
 #kgrs .hint.on{display:block}
 #kgrs .hint b{color:#d9f244}
 #kgrs .hint button{margin-top:8px;background:#23252d;border-radius:10px;padding:8px 12px;font-weight:700}
-#kgrs .sheet{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));border-radius:26px;padding:6px 16px 10px;max-height:60vh;display:flex;flex-direction:column}
+#kgrs .sheet{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));border-radius:26px;padding:6px 16px 10px;max-height:56vh;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+#kgrs .sheet>*{flex:none}
 #kgrs .handle{align-self:center;width:100%;height:20px;background:transparent;position:relative;flex:none}
 #kgrs .handle:after{content:'';position:absolute;left:50%;top:8px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:rgba(255,255,255,.25)}
 #kgrs .sheet.mini .chips,#kgrs .sheet.mini .owners-toggle,#kgrs .sheet.mini .owners-wrap,#kgrs .sheet.mini .t2{display:none}
 #kgrs .sheet.mini .row1{min-height:56px}
 #kgrs .row1{display:flex;gap:12px;align-items:center;padding-right:112px;min-height:74px}
 #kgrs .ico{width:46px;height:46px;border-radius:50%;background:#23252d;display:grid;place-items:center;font-size:20px;flex:none}
-#kgrs .t1{font-size:21px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
-#kgrs .t2{font-size:13px;color:#9aa0ac;margin-top:2px;line-height:1.3}
+#kgrs .t1{font-size:21px;font-weight:800;letter-spacing:-.01em;line-height:1.15;overflow-wrap:anywhere}
+#kgrs .t2{font-size:13px;color:#9aa0ac;margin-top:2px;line-height:1.3;overflow-wrap:anywhere}
 #kgrs .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 #kgrs .chips span{background:#23252d;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;color:#d6d9df}
 #kgrs .chips span.a{background:rgba(217,242,68,.14);color:#d9f244}
@@ -167,10 +178,16 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs ul.owners.open{display:block}
 #kgrs ul.owners li{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;font-size:14px;border-top:1px solid rgba(255,255,255,.06)}
 #kgrs ul.owners li b{color:#d9f244;white-space:nowrap}
+@media (max-width:350px){#kgrs .t1{font-size:18px}#kgrs .go{width:86px;height:86px;font-size:17px;top:46px}#kgrs .row1,#kgrs .row2{padding-right:96px}#kgrs .pill{font-size:11px;padding:0 9px}}
+@media (max-height:700px) and (orientation:portrait){#kgrs .sheet{max-height:50vh}}
+@media (orientation:landscape) and (max-height:520px){#kgrs .sheet{left:auto;width:min(460px,58vw);max-height:calc(100vh - 78px - env(safe-area-inset-bottom))}#kgrs .hint{left:auto;width:min(460px,58vw)}}
 #kgrs .none{color:#9aa0ac;font-size:13px;padding:6px 2px}
 .kgrs-fs{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;transform:none!important;overflow:hidden!important;z-index:2147482000!important;background:#000!important}
 .kgrs-fs-hide{display:none!important}
-.kgrs-fs .ol-overlaycontainer-stopevent{top:72px!important;height:calc(100% - 72px)!important}
+.kgrs-shift-t{margin-top:54px!important}
+.kgrs-shift-b{margin-bottom:var(--kgrs-sh,0px)!important}
+html.kgrs-lock,html.kgrs-lock body{overflow:hidden!important}
+.kgrs-fs .ol-overlaycontainer-stopevent{top:var(--kgrs-top,58px)!important;height:calc(100% - var(--kgrs-top,58px) - var(--kgrs-sh,0px))!important}
 `;
 
   const addStyle = (id, css) => {
@@ -201,6 +218,58 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
       if (/^Носиоци/.test(t)) tb.classList.add('kgrs-owners');
       if (/^Дијелови/.test(t)) tb.classList.add('kgrs-parts');
     });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* 3b. LATINICA -> CIRILICA U POLJIMA ZA PRETRAGU                      */
+  /* ------------------------------------------------------------------ */
+  const L2C = { a: 'а', b: 'б', c: 'ц', č: 'ч', ć: 'ћ', d: 'д', đ: 'ђ', e: 'е', f: 'ф', g: 'г', h: 'х', i: 'и', j: 'ј', k: 'к', l: 'л', m: 'м', n: 'н', o: 'о', p: 'п', r: 'р', s: 'с', š: 'ш', t: 'т', u: 'у', v: 'в', z: 'з', ž: 'ж' };
+  function latToCyr(str) {
+    let out = '';
+    for (const ch of str) {
+      const lo = ch.toLowerCase(), up = ch !== lo, last = out.slice(-1), lastLo = last.toLowerCase();
+      let c = null;
+      // digrafi: nj, lj, dj, dž (prethodno slovo je vec pretvoreno u cirilicu)
+      if (lo === 'j' && lastLo === 'н') { out = out.slice(0, -1); c = last === 'Н' ? 'Њ' : 'њ'; }
+      else if (lo === 'j' && lastLo === 'л') { out = out.slice(0, -1); c = last === 'Л' ? 'Љ' : 'љ'; }
+      else if (lo === 'j' && lastLo === 'д') { out = out.slice(0, -1); c = last === 'Д' ? 'Ђ' : 'ђ'; }
+      else if (lo === 'ž' && lastLo === 'д') { out = out.slice(0, -1); c = last === 'Д' ? 'Џ' : 'џ'; }
+      else if (L2C[lo]) c = up ? L2C[lo].toUpperCase() : L2C[lo];
+      out += c !== null ? c : ch;
+    }
+    return out;
+  }
+  // Kad se u polje za pretragu (opština, katastarska opština, naselje, ulica) ukuca latinica, pretvara se u ćirilicu,
+  // da bi sajtov filter pronašao stavku. Hvatamo "input" prije nego što ga obradi njihov kod.
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (!el || el.tagName !== 'INPUT' || !el.classList.contains('search') || !el.closest('.ui.dropdown')) return;
+    const v = el.value;
+    if (!/[A-Za-zČĆŠŽĐčćšžđ]/.test(v)) return;
+    const c = latToCyr(v);
+    if (c !== v) { el.value = c; try { el.setSelectionRange(c.length, c.length); } catch (err) { /* ok */ } }
+  }, true);
+
+  /* ------------------------------------------------------------------ */
+  /* 3c. reCAPTCHA PROZOR: CENTRIRAN I SKALIRAN                          */
+  /* ------------------------------------------------------------------ */
+  let rcWraps = [];
+  function fixRecaptcha() {
+    const frames = document.querySelectorAll('iframe[src*="/bframe"]');
+    const active = [];
+    frames.forEach((fr) => {
+      let wrap = fr; while (wrap.parentElement && wrap.parentElement !== document.body) wrap = wrap.parentElement;
+      if (!wrap.parentElement) return;
+      const open = getComputedStyle(wrap).visibility !== 'hidden' && fr.offsetWidth > 50 && fr.offsetHeight > 50;
+      let box = fr; while (box.parentElement && box.parentElement !== wrap) box = box.parentElement;
+      if (!open) { if (wrap.classList.contains('kgrs-rc-wrap')) { wrap.classList.remove('kgrs-rc-wrap'); box.classList.remove('kgrs-rc-box'); box.style.removeProperty('width'); box.style.removeProperty('height'); } return; }
+      const w = fr.offsetWidth, hh = fr.offsetHeight;
+      const k = Math.min(1, (innerWidth - 12) / w, (innerHeight - 12) / hh);
+      wrap.classList.add('kgrs-rc-wrap'); box.classList.add('kgrs-rc-box');
+      box.style.setProperty('width', w + 'px', 'important'); box.style.setProperty('height', hh + 'px', 'important');
+      box.style.setProperty('--rcs', String(k)); active.push(wrap);
+    });
+    rcWraps = active;
   }
 
   /* ------------------------------------------------------------------ */
@@ -311,13 +380,29 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
   let raw = null;        // filtrirana pozicija bez kalibracije {x,y,acc,t}
   let cal = null;        // {dx,dy,t}
   try { cal = JSON.parse(localStorage.getItem(CAL_KEY)); } catch (e) { cal = null; }
+  if (cal && !cal.pts) cal = { pts: [{ dx: cal.dx, dy: cal.dy, w: 1 }], dx: cal.dx, dy: cal.dy, t: cal.t };
+  if (cal && (!cal.t || Date.now() - cal.t > 12 * 3600 * 1000)) cal = null;     // GPS pomak se mijenja tokom dana
+  function calMean() {
+    const W = cal.pts.reduce((a, q) => a + q.w, 0);
+    cal.dx = cal.pts.reduce((a, q) => a + q.dx * q.w, 0) / W; cal.dy = cal.pts.reduce((a, q) => a + q.dy * q.w, 0) / W;
+    return Math.max(...cal.pts.map((q) => Math.hypot(q.dx - cal.dx, q.dy - cal.dy)));   // rasipanje
+  }
   const KF = { x: null, y: null, P: 0, t: 0 };
 
-  function kalman(x, y, acc, t) {
+  let outl = 0;
+  function kalman(x, y, acc, t, speed) {
     const R = Math.max(acc, 1) ** 2;
-    if (KF.x === null || t - KF.t > 15000) { KF.x = x; KF.y = y; KF.P = R; KF.t = t; return; }
-    KF.P += ((t - KF.t) / 1000) * 2.25;          // hodanje ~1.5 m/s
-    const g = KF.P / (KF.P + R);
+    if (KF.x === null || t - KF.t > 15000) { KF.x = x; KF.y = y; KF.P = R; KF.t = t; outl = 0; return; }
+    const dt = Math.max((t - KF.t) / 1000, 0.05);
+    const d = Math.hypot(x - KF.x, y - KF.y);
+    // brzina: iz uredjaja ako postoji, inace iz pomaka; mirovanje => jace glađenje, hodanje => brza reakcija
+    const v = typeof speed === 'number' && speed >= 0 ? speed : Math.min(d / dt, 3);
+    KF.P += dt * (0.04 + 1.2 * v * v);
+    let Reff = R;
+    if (d > 5 && d > 3 * Math.sqrt(KF.P + R)) {        // nagli skok: vjerovatno loše mjerenje
+      if (++outl < 3) Reff = R * 25; else { outl = 0; KF.P = R; }   // ako se ponavlja, prihvati kao pravo kretanje
+    } else outl = 0;
+    const g = KF.P / (KF.P + Reff);
     KF.x += g * (x - KF.x); KF.y += g * (y - KF.y); KF.P *= 1 - g; KF.t = t;
   }
   const calibrated = () => (cal ? [raw.x + cal.dx, raw.y + cal.dy] : [raw.x, raw.y]);
@@ -346,7 +431,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     catch (e) { return setPill('bad', 'Greška koordinata', e.message); }
     const acc = p.coords.accuracy || 99;
     if (acc > 60 && raw) return;                  // odbaci jako loša mjerenja kad već imamo poziciju
-    kalman(xy[0], xy[1], acc, p.timestamp || Date.now());
+    kalman(xy[0], xy[1], acc, p.timestamp || Date.now(), p.coords.speed);
     raw = { x: KF.x, y: KF.y, acc, t: Date.now() };
     drawGps(map);
     refreshStatus();
@@ -363,9 +448,17 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     if (follow) map.getView().animate({ center: c, duration: 250 });
   }
 
+  function datumWarning(map) {
+    try {
+      const d = window.proj4 && proj4.defs && proj4.defs(map.getView().getProjection().getCode());
+      if (!d) return '';
+      return d.datum_params || /towgs84|nadgrids/i.test(JSON.stringify(d)) ? '' : 'Sajt ne definiše pomak datuma (towgs84): tačka može biti pomjerena. <b>Obavezno kalibrišite.</b>';
+    } catch (e) { return ''; }
+  }
   function start() {
     const map = getMap();
     if (!map) return;
+    const dw = datumWarning(map); if (dw) setHint(dw, true, 9000);
     if (!navigator.geolocation) return setPill('bad', 'GPS nije podržan', '');
     refs.go.className = 'go wait'; refs.goT.textContent = 'Traži…';
     setPill('warn', 'Tražim signal…', '');
@@ -387,7 +480,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     const map = getMap();
     if (!map || !raw) return setHint('Prvo uključite GPS (dugme <b>Kreni</b>) i sačekajte signal.', true);
     calMode = true;
-    setHint('Stanite na <b>poznatu tačku</b> (ćošak parcele, međni kamen) i <b>dodirnite tu tačku na mapi</b>. Blizu ćoška se poravna na ćošak.<br><button id="kgrs-cal-x">Odustani</button>');
+    setHint('Stanite na <b>poznatu tačku</b> (ćošak parcele, međni kamen), mirujte par sekundi i <b>dodirnite tu tačku na mapi</b>. Blizu ćoška se poravna na ćošak.' + (cal ? ' <b>Dodajete još jednu tačku</b> (prosjek je tačniji).' : '') + '<br><button id="kgrs-cal-x">Odustani</button>');
     document.getElementById('kgrs-cal-x').onclick = () => { calMode = false; setHint(''); map.un('singleclick', onCalTap); };
     map.once('singleclick', onCalTap);
   }
@@ -398,19 +491,26 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     const rings = parcelRings(getMap());
     let best = 6;
     rings.forEach((r) => r.forEach((v) => { const d = Math.hypot(v[0] - t[0], v[1] - t[1]); if (d < best) { best = d; t = v; snapped = true; } }));
-    cal = { dx: t[0] - raw.x, dy: t[1] - raw.y, t: Date.now() };
+    const pt = { dx: t[0] - raw.x, dy: t[1] - raw.y, w: 1 / Math.max(KF.P, 1) };
+    if (!cal) cal = { pts: [], dx: 0, dy: 0, t: 0 };
+    cal.pts.push(pt); if (cal.pts.length > 6) cal.pts.shift();
+    cal.t = Date.now();
+    const spread = calMean();
     try { localStorage.setItem(CAL_KEY, JSON.stringify(cal)); } catch (err) { /* ok */ }
     drawGps(getMap()); refreshStatus();
-    setHint(`Kalibracija postavljena: pomak <b>${Math.hypot(cal.dx, cal.dy).toFixed(1)} m</b>${snapped ? ' (poravnato na ćošak)' : ''}.`, true);
+    let msg = `Kalibracija: pomak <b>${Math.hypot(cal.dx, cal.dy).toFixed(1)} m</b>${snapped ? ' (poravnato na ćošak)' : ''}, tačaka: ${cal.pts.length}.`;
+    if (cal.pts.length > 1 && spread > 4) msg += ` <b>Tačke se ne slažu (±${spread.toFixed(1)} m)</b>: vjerovatno neprecizan dodir. Uklonite kalibraciju (✕) i ponovite.`;
+    else if (cal.pts.length === 1) msg += ' Za veću tačnost dodajte još jednu tačku (drugi ćošak).';
+    setHint(msg, true, 9000);
   }
   function resetCalibration() {
     cal = null; try { localStorage.removeItem(CAL_KEY); } catch (e) { /* ok */ }
     if (raw) drawGps(getMap()); refreshStatus(); setHint('Kalibracija uklonjena.', true);
   }
   let hintTimer = 0;
-  function setHint(html, auto) {
+  function setHint(html, auto, ms) {
     refs.hint.innerHTML = html; refs.hint.classList.toggle('on', !!html);
-    clearTimeout(hintTimer); if (auto && html) hintTimer = setTimeout(() => refs.hint.classList.remove('on'), 4500);
+    clearTimeout(hintTimer); if (auto && html) hintTimer = setTimeout(() => refs.hint.classList.remove('on'), ms || 4500);
   }
 
   /* ------------------------------------------------------------------ */
@@ -428,7 +528,8 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     const pill = h('div', 'pill glass'); const dot = h('span', 'dot'); const pt = h('span'); const ps = h('small');
     pill.append(dot, pt, ps);
     const recenter = h('button', 'rb glass', '◎'); recenter.title = 'Centriraj na mene'; recenter.style.opacity = '.55';
-    top.append(close, pill, recenter);
+    const right = h('div', 'right'); right.append(pill, recenter);
+    top.append(close, right);
 
     const hint = h('div', 'hint glass');
 
@@ -455,7 +556,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 
     root.append(top, hint, sheet);
     document.body.appendChild(root);
-    Object.assign(refs, { root, close, pill, pt, ps, recenter, hint, t1, t2, chips, s1, s2, st, calBtn, calX, ownersBtn, ownersL, ownersC, owners, go, goT });
+    Object.assign(refs, { root, sheet, close, pill, pt, ps, recenter, hint, t1, t2, chips, s1, s2, st, calBtn, calX, ownersBtn, ownersL, ownersC, owners, go, goT });
 
     go.onclick = () => (watchId === null ? start() : stop());
     handle.onclick = () => sheet.classList.toggle('mini');
@@ -497,7 +598,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
   function refreshStatus() {
     if (!refs.root) return;
     refs.calX.style.display = cal ? '' : 'none';
-    refs.calBtn.textContent = cal ? '⌖ Kalibrisano · ' + Math.hypot(cal.dx, cal.dy).toFixed(1) + ' m' : '⌖ Kalibriši';
+    refs.calBtn.textContent = cal ? '⌖ Kalibrisano · ' + Math.hypot(cal.dx, cal.dy).toFixed(1) + ' m' + (cal.pts.length > 1 ? ' (' + cal.pts.length + ')' : '') : '⌖ Kalibriši';
     refs.calBtn.className = 'chip-btn' + (cal ? ' acc' : '');
     if (watchId === null) {
       refs.st.className = 'st'; refs.s1.textContent = 'GPS isključen'; refs.s2.textContent = 'Pritisnite „Kreni“ i hodajte po placu'; return;
@@ -518,19 +619,55 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
   /* ------------------------------------------------------------------ */
   /* 8. PRIKAZ PREKRIVACA KAD JE MAPA OTVORENA                           */
   /* ------------------------------------------------------------------ */
-  let fsEls = [], fsHidden = [], fsTarget = null;
+  let fsEls = [], fsHidden = [], fsShift = [], fsTarget = null, fsScroll = null;
   function enterFullscreen(t) {
-    // Prosirimo cijeli modal (a ne samo mapu): fixed element unutar transformisanog modala ne bi popunio ekran.
-    let top = t.closest('.ui.dimmer') || t.closest('.ui.modal') || t.closest('[class*=modal]') || t;
-    const chain = []; for (let e = t; e && e !== document.body; e = e.parentElement) { chain.push(e); if (e === top) break; }
+    // Cijeli lanac roditelja do <body> postaje fixed preko cijelog ekrana, a "braca" se sakrivaju:
+    // tako mapa popunjava ekran i kad je sajt drzi u modalu sa transformacijom, dimmeru ili omotacu.
+    const da = document.getElementById('d_all');
+    fsScroll = { y: window.scrollY, d: da ? da.scrollTop : 0, b: document.body.scrollTop };
+    const chain = []; for (let e = t; e && e !== document.body && e !== document.documentElement; e = e.parentElement) chain.push(e);
     chain.forEach((e) => { e.classList.add('kgrs-fs'); fsEls.push(e); });
     chain.forEach((e) => { [...(e.parentElement ? e.parentElement.children : [])].forEach((sib) => {
-      if (!chain.includes(sib) && sib.id !== 'kgrs' && e !== top) { sib.classList.add('kgrs-fs-hide'); fsHidden.push(sib); } }); });
+      if (!chain.includes(sib) && sib.id !== 'kgrs' && sib.tagName !== 'SCRIPT' && sib.tagName !== 'STYLE' && sib.tagName !== 'LINK') { sib.classList.add('kgrs-fs-hide'); fsHidden.push(sib); } }); });
+    document.documentElement.classList.add('kgrs-lock');
     fsTarget = t;
+    try { const v = getMap().getView(); if (v.getMaxZoom && v.getMaxZoom() < 21 && v.setMaxZoom) v.setMaxZoom(21); } catch (e) { /* ok */ }
+    shiftControls(t);
+    placeTopControls();
+  }
+  /** Njihove kontrole koje lebde u uglovima mape (npr. „Ортофото“, skala) pomjeramo da ne budu ispod nasih traka. */
+  function shiftControls(t) {
+    const tw = t.getBoundingClientRect().width;
+    t.querySelectorAll('*').forEach((e) => {
+      if (e.closest('#kgrs') || /^(CANVAS|SCRIPT|STYLE)$/.test(e.tagName) || /ol-overlaycontainer|ol-viewport/.test(e.className && e.className.toString())) return;
+      const cs = getComputedStyle(e);
+      if (cs.position !== 'absolute' && cs.position !== 'fixed') return;
+      if (e.parentElement.closest('.ol-overlaycontainer-stopevent') || e.parentElement.closest('.ol-overlaycontainer')) return; // pomjera se cijeli kontejner
+      const r = e.getBoundingClientRect(); if (r.width > tw * 0.8) return;
+      const top = parseFloat(cs.top), bottom = parseFloat(cs.bottom);
+      if (!isNaN(top) && top < 90 && (isNaN(bottom) || bottom > 90)) { e.classList.add('kgrs-shift-t'); fsShift.push(e); }
+      else if (!isNaN(bottom) && bottom < 120) { e.classList.add('kgrs-shift-b'); fsShift.push(e); }
+    });
+  }
+  function placeTopControls() {
+    // OL kontejner (zoom +/−) ide ispod nasih pomjerenih kontrola u gornjem lijevom uglu (npr. „Ортофото“)
+    let bottom = 58;
+    fsShift.forEach((e) => { if (e.classList.contains('kgrs-shift-t')) { const r = e.getBoundingClientRect(); if (r.left < innerWidth / 2) bottom = Math.max(bottom, r.bottom + 6); } });
+    document.documentElement.style.setProperty('--kgrs-top', Math.ceil(bottom) + 'px');
   }
   function leaveFullscreen() {
     fsEls.forEach((e) => e.classList.remove('kgrs-fs')); fsHidden.forEach((e) => e.classList.remove('kgrs-fs-hide'));
-    fsEls = []; fsHidden = []; fsTarget = null;
+    fsShift.forEach((e) => e.classList.remove('kgrs-shift-t', 'kgrs-shift-b'));
+    document.documentElement.classList.remove('kgrs-lock'); document.documentElement.style.removeProperty('--kgrs-sh'); document.documentElement.style.removeProperty('--kgrs-top');
+    fsEls = []; fsHidden = []; fsShift = []; fsTarget = null;
+    if (fsScroll) { const da = document.getElementById('d_all'); window.scrollTo(0, fsScroll.y); if (da) da.scrollTop = fsScroll.d; document.body.scrollTop = fsScroll.b; fsScroll = null; }
+  }
+  /** Visina donjeg panela -> CSS varijabla, da donje kontrole mape budu iznad panela (samo kad panel pokriva sirinu). */
+  function syncSheetVar() {
+    if (!refs.sheet || !fsTarget) return;
+    const r = refs.sheet.getBoundingClientRect();
+    const wide = r.width > innerWidth * 0.7;
+    document.documentElement.style.setProperty('--kgrs-sh', wide ? Math.round(innerHeight - r.top) + 'px' : '0px');
   }
   function sync() {
     const map = getMap();
@@ -540,7 +677,8 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     // prikaz samo nakon klika na „Прикажи на мапи“ i dok je mapa stvarno vidljiva
     if (mapRequested && !fsTarget && Date.now() - mapRequested > 8000) mapRequested = 0; // mapa se nije otvorila
     const visible = !!(mapRequested && isShown(t));
-    if (visible && !fsTarget) { enterFullscreen(t); map.updateSize(); }
+    if (visible && !fsTarget) { enterFullscreen(t); map.updateSize(); if (innerHeight < 700 || innerWidth > innerHeight) refs.sheet.classList.add('mini'); }
+    if (visible) syncSheetVar();
     if (!visible && fsTarget) { leaveFullscreen(); mapRequested = 0; }
     refs.root.classList.toggle('on', visible);
     if (visible && !wasOn) { renderParcel(); refreshStatus(); }
@@ -550,8 +688,9 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
   function boot() {
     if (!(window.ol && ol.source && ol.layer && ol.proj && document.body)) return setTimeout(boot, 400);
     prepPage(); tidy(); buildUi();
-    setInterval(tidy, 700);
-    setInterval(() => { try { sync(); } catch (e) { /* ok */ } }, 500);
+    let tt = 0; const mo = new MutationObserver(() => { clearTimeout(tt); tt = setTimeout(tidy, 250); });
+    mo.observe(document.body, { childList: true, subtree: true });
+    setInterval(() => { try { sync(); fixRecaptcha(); } catch (e) { /* ok */ } }, 500);
     setInterval(() => { if (watchId !== null && raw) { try { refreshStatus(); } catch (e) { /* ok */ } } }, 1500);
   }
   // tema se postavlja odmah (prije cekanja na ol), da stranica ne "bljesne" bijelo

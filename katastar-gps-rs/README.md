@@ -18,6 +18,12 @@ Mobilna web aplikacija (PWA) za hodanje po placu uz GPS: prikaz parcela na satel
 - UNUTAR/IZVAN parcele i rastojanje do međe, ako sajt drži označenu parcelu kao vektorski sloj.
 - Podaci o vlasnicima se samo prikazuju iz rezultata pretrage; ne čuvaju se i ne šalju nigdje.
 
+## Preciznost (v0.3)
+- Filter pozicije prilagođen brzini (mirovanje = jače glađenje, hodanje = brza reakcija) i odbacivanje naglih skokova.
+- Kalibracija sa više tačaka (težinski prosjek), upozorenje ako se tačke ne slažu, ističe nakon 12 h.
+- Upozorenje ako sajtova projekcija nema `towgs84` (pomak datuma).
+- **RTK (centimetri):** spoljni Bluetooth RTK prijemnik + njegova aplikacija koja šalje „mock location“ (Podešavanja → Opcije za programere → Izaberi aplikaciju za lažnu lokaciju). WebView tada dobija tačnu poziciju bez izmjena u kodu. Ograničenje je i sam katastar: granice na planu mogu odstupati od terena za metar i više.
+
 ## Glavni tok: GPS direktno na ekatastar mapi
 `userscript/katastar-gps-rs.user.js` dodaje dugme ◎ na mapu sajta `ekatastar.rgurs.org`. Parcelu nađeš na njihovom sajtu (captchu rješavaš ti), klikneš „Прикажи на мапи“, pa uključiš GPS i hodaš: na njihovoj mapi se crta tvoja tačka sa krugom tačnosti i koordinate u EPSG:31276.
 - Brzi test: zalijepi cijeli fajl u konzolu (F12) na otvorenoj mapi.
