@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Katastar GPS RS
 // @namespace    https://github.com/277digital
-// @version      0.4.0
+// @version      0.5.0
 // @description  Moderan izgled ekatastar.rgurs.org + GPS uživo na mapi (panel parcele, vlasnici, kalibracija)
 // @match        https://ekatastar.rgurs.org/*
 // @grant        none
@@ -105,6 +105,8 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #d_info table[id^=parc_] td:nth-child(6) button{background:var(--acc)!important;color:var(--accfg)!important;box-shadow:0 6px 24px rgba(217,242,68,.22)!important}
 #d_info table[id^=parc_] td:nth-child(4) button{background:var(--s2)!important;color:var(--fg)!important;min-height:44px;font-weight:600!important}
 #d_info table[id^=parc_] td button{padding:0 16px!important}
+#d_info table[id^=parc_] td button i.icon,#d_info table[id^=parc_] td button .icon{display:none!important}
+#d_info table[id^=parc_] td button{justify-content:center!important;text-align:center!important}
 #d_info table[id^=parc_] td button i.icon{position:static!important;width:auto!important;height:auto!important;line-height:1!important;margin:0 4px 0 0!important;padding:0!important;background:transparent!important;box-shadow:none!important;opacity:1!important}
 #d_info table.kgrs-owners tr{display:flex!important;justify-content:space-between;gap:12px;padding:11px 16px!important;border-top:1px solid var(--line)!important}
 #d_info table.kgrs-owners td:first-child{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:600}
@@ -148,7 +150,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .handle:after{content:'';position:absolute;left:50%;top:8px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:rgba(255,255,255,.25)}
 #kgrs .sheet.mini .chips,#kgrs .sheet.mini .owners-toggle,#kgrs .sheet.mini .owners-wrap,#kgrs .sheet.mini .t2{display:none}
 #kgrs .sheet.mini .row1{min-height:56px}
-#kgrs .row1{display:flex;gap:12px;align-items:center;padding-right:112px;min-height:74px}
+#kgrs .row1{display:flex;gap:12px;align-items:center;padding:2px 112px 0 4px;min-height:70px}
 #kgrs .ico{width:46px;height:46px;border-radius:50%;background:#23252d;display:grid;place-items:center;font-size:20px;flex:none}
 #kgrs .t1{font-size:21px;font-weight:800;letter-spacing:-.01em;line-height:1.15;overflow-wrap:anywhere}
 #kgrs .t2{font-size:13px;color:#9aa0ac;margin-top:2px;line-height:1.3;overflow-wrap:anywhere}
@@ -156,17 +158,25 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .chips span{background:#23252d;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;color:#d6d9df}
 #kgrs .chips span.a{background:rgba(217,242,68,.14);color:#d9f244}
 #kgrs .divider{height:1px;background:rgba(255,255,255,.09);margin:8px -16px 8px}
-#kgrs .row2{display:flex;align-items:center;gap:10px;padding-right:112px;min-height:70px}
+#kgrs .row2{display:flex;align-items:center;gap:10px;padding-right:112px;min-height:60px}
 #kgrs .st{flex:1;min-width:0}
 #kgrs .s1{font-size:16px;font-weight:800}
 #kgrs .s2{font-size:12px;color:#9aa0ac;margin-top:2px}
+#kgrs .st.off .s1,#kgrs .st.off .s2{display:none}
+#kgrs .st.off .actions{margin-top:0}
 #kgrs .st.ok .s1{color:#58e08a}#kgrs .st.bad .s1{color:#ff6b5e}#kgrs .st.warn .s1{color:#ffb84d}
-#kgrs .go{position:absolute;right:14px;top:50px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#34363f,#1a1b20 70%);box-shadow:0 0 0 5px #121317,0 0 0 7px #2e3039,0 10px 28px rgba(0,0,0,.6);display:grid;place-items:center;align-content:center;gap:6px;font-weight:800;font-size:19px;color:#f2f3f5;transition:box-shadow .2s}
-#kgrs .go i{display:block;width:26px;height:4px;border-radius:2px;background:#9aa0ac}
-#kgrs .go.run{box-shadow:0 0 0 5px #121317,0 0 0 8px #d9f244,0 0 34px 6px rgba(217,242,68,.38),0 10px 28px rgba(0,0,0,.6)}
-#kgrs .go.run i{background:#d9f244}
-#kgrs .go.wait i{background:#ffb84d;animation:kp 1s infinite}
+#kgrs .go{position:absolute;right:14px;top:50px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#34363f,#1a1b20 70%);box-shadow:0 0 0 5px #121317,0 0 0 7px #2e3039,0 10px 28px rgba(0,0,0,.6);display:grid;place-items:center;align-content:center;gap:8px;font-weight:800;font-size:19px;color:#f2f3f5;transition:box-shadow .25s,background .25s}
+#kgrs .go i{display:block;width:16px;height:16px;border-radius:50%;border:2px solid #9aa0ac;transition:all .25s}
+#kgrs .go:after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid transparent;pointer-events:none}
+#kgrs .go.wait i{border-color:#ffb84d;animation:kp 1s infinite}
+#kgrs .go.wait:after{border-color:rgba(255,184,77,.65);animation:krip 1.4s ease-out infinite}
+#kgrs .go.run{background:radial-gradient(circle at 50% 35%,#238a4c,#0f3a20 72%);box-shadow:0 0 0 5px #0d1a12,0 0 0 8px #34d27a,0 0 26px 4px rgba(52,210,122,.4),0 10px 28px rgba(0,0,0,.6);animation:kglow 2s ease-in-out infinite}
+#kgrs .go.run i{border-color:#fff;background:#fff;width:14px;height:14px;animation:kbeat 1.4s ease-in-out infinite}
+#kgrs .go.run:after{border-color:rgba(52,210,122,.75);animation:krip 1.8s ease-out infinite}
 @keyframes kp{50%{opacity:.25}}
+@keyframes krip{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.13);opacity:0}}
+@keyframes kbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+@keyframes kglow{0%,100%{box-shadow:0 0 0 5px #0d1a12,0 0 0 8px #34d27a,0 0 22px 2px rgba(52,210,122,.3),0 10px 28px rgba(0,0,0,.6)}50%{box-shadow:0 0 0 5px #0d1a12,0 0 0 8px #34d27a,0 0 34px 8px rgba(52,210,122,.5),0 10px 28px rgba(0,0,0,.6)}}
 #kgrs .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 #kgrs .chip-btn{background:#23252d;border-radius:12px;padding:10px 14px;font-weight:700;font-size:13px;display:inline-flex;gap:6px;align-items:center}
 #kgrs .chip-btn.acc{background:#d9f244;color:#141507}
@@ -195,7 +205,11 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 #kgrs .sw:after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#9aa0ac;transition:left .15s,background .15s}
 #kgrs .lrow.on .sw{background:rgba(217,242,68,.35)}
 #kgrs .lrow.on .sw:after{left:19px;background:#d9f244}
-#kgrs .layers{width:max-content}
+#kgrs .layers{width:max-content;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#kgrs .rd{width:20px;height:20px;border-radius:50%;border:2px solid #4a4d57;position:relative;flex:none}
+#kgrs .lrow.radio.on .rd{border-color:#d9f244}
+#kgrs .lrow.radio.on .rd:after{content:'';position:absolute;inset:3px;border-radius:50%;background:#d9f244}
+#kgrs .credit{margin:6px 8px 2px;font-size:10px;color:#6f737e;line-height:1.3}
 @media (orientation:landscape) and (max-height:520px){#kgrs .layers{right:auto;left:58px;max-width:280px}}
 `;
 
@@ -215,6 +229,9 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     addStyle('kgrs-theme', CSS);
   }
   function tidy() {
+    document.querySelectorAll('#d_all p, #d_all div, #d_all span').forEach((e) => {
+      if (e.children.length <= 1 && e.textContent.length < 140 && /^\s*Републичка управа за геодетске/.test(e.textContent) && !e.querySelector('input,button,select')) e.style.setProperty('display', 'none', 'important');
+    });
     document.querySelectorAll('.ui.message').forEach((m) => {
       if (m.querySelector('ol.ui.list')) m.classList.add('kgrs-hide');
     });
@@ -550,13 +567,12 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
 
     const sheet = h('div', 'sheet glass');
     const row1 = h('div', 'row1');
-    const ico = h('div', 'ico', '⬡');
     const tt = h('div'); tt.style.minWidth = 0;
     const t1 = h('div', 't1', 'Parcela'); const t2 = h('div', 't2'); const chips = h('div', 'chips');
-    tt.append(t1, t2, chips); row1.append(ico, tt);
+    tt.append(t1, t2, chips); row1.append(tt);
     const divider = h('div', 'divider');
     const row2 = h('div', 'row2');
-    const st = h('div', 'st'); const s1 = h('div', 's1', 'GPS isključen'); const s2 = h('div', 's2', 'Pritisnite „Kreni“ i hodajte po placu');
+    const st = h('div', 'st off'); const s1 = h('div', 's1'); const s2 = h('div', 's2');
     const actions = h('div', 'actions');
     const calBtn = h('button', 'chip-btn', '⌖ Kalibriši');
     const calX = h('button', 'chip-btn x', '✕'); calX.style.display = 'none'; calX.title = 'Ukloni kalibraciju';
@@ -598,7 +614,6 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     refs.chips.textContent = '';
     if (p) {
       if (p.povrsina) { const c = h('span', 'a', p.povrsina); refs.chips.append(c); }
-      if (p.list) refs.chips.append(h('span', null, 'Лист ' + p.list));
       p.dijelovi.slice(0, 2).forEach((d) => d[0] && refs.chips.append(h('span', null, d[0])));
     }
     refs.owners.textContent = '';
@@ -616,7 +631,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     refs.calBtn.textContent = cal ? '⌖ Kalibrisano · ' + Math.hypot(cal.dx, cal.dy).toFixed(1) + ' m' + (cal.pts.length > 1 ? ' (' + cal.pts.length + ')' : '') : '⌖ Kalibriši';
     refs.calBtn.className = 'chip-btn' + (cal ? ' acc' : '');
     if (watchId === null) {
-      refs.st.className = 'st'; refs.s1.textContent = 'GPS isključen'; refs.s2.textContent = 'Pritisnite „Kreni“ i hodajte po placu'; return;
+      refs.st.className = 'st off'; refs.s1.textContent = ''; refs.s2.textContent = ''; return;
     }
     if (!raw) { refs.st.className = 'st warn'; refs.s1.textContent = 'Tražim GPS signal…'; refs.s2.textContent = 'Izađite na otvoreno'; return; }
     const acc = Math.round(raw.acc), c = calibrated();
@@ -641,6 +656,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     const c = document.createElement('div'); c.id = 'kgrsmap'; document.body.appendChild(c);
     mounted = { c, orig: map.getTarget(), t };
     map.setTarget(c);
+    installBases(map);
     try { const v = map.getView(); if (v.getMaxZoom && v.getMaxZoom() < 21 && v.setMaxZoom) v.setMaxZoom(21); } catch (e) { /* ok */ }
     map.updateSize();
     refs.root.classList.add('on');
@@ -662,7 +678,7 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     const map = getMap();
     if (watchId !== null) stop();
     refs.layers.classList.remove('on');
-    if (map) { map.setTarget(mounted.orig); map.updateSize(); }
+    if (map) { removeBases(map); map.setTarget(mounted.orig); map.updateSize(); }
     mounted.c.remove(); mounted = null; mapRequested = 0;
     refs.root.classList.remove('on');
   }
@@ -673,19 +689,84 @@ td[style*="text-align: right"],td[style*="text-align:right"]{padding:6px 0 0!imp
     const b = btns.find(isShown) || btns[0];
     if (b) b.click();
   }
-  /** Slojevi mape (njihovi nazivi): ortofoto, katastarska opstina, parcele, zgrade... */
+  /* ------------------------------------------------------------------ */
+  /* PODLOGE: Esri satelit / OpenStreetMap ispod njihovih slojeva         */
+  /* ------------------------------------------------------------------ */
+  const BASE_KEY = 'kgrs.base.v1', LINES_KEY = 'kgrs.lines.v1';
+  const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ok */ } };
+  let baseKey = lsGet(BASE_KEY, 'esri');          // 'esri' | 'osm' | 'rgurs'
+  let whiteLines = lsGet(LINES_KEY, true);        // linije granica parcela: bijele sa tamnom ivicom
+  let bases = null;                                // { esri, osm, saved:[[layer, visible]], hooks:[[layer, pre, post]] }
+  const findLayer = (map, re) => allLayers(map.getLayers(), []).find((l) => re.test(l.get('title') || ''));
+  const linesLayers = (map) => allLayers(map.getLayers(), []).filter((l) => /^(Парцеле|Катастарска)/.test(l.get('title') || ''));
+
+  function installBases(map) {
+    if (bases) return;
+    bases = { saved: [], hooks: [] };
+    try {
+      bases.esri = new ol.layer.Tile({ zIndex: -20, visible: false, source: new ol.source.XYZ({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', maxZoom: 19, crossOrigin: 'anonymous' }) });
+      bases.osm = new ol.layer.Tile({ zIndex: -19, visible: false, source: ol.source.OSM ? new ol.source.OSM({ crossOrigin: 'anonymous' })
+        : new ol.source.XYZ({ url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', maxZoom: 19, crossOrigin: 'anonymous' }) });
+      map.addLayer(bases.esri); map.addLayer(bases.osm);
+    } catch (e) { bases.esri = bases.osm = null; }
+    allLayers(map.getLayers(), []).forEach((l) => bases.saved.push([l, l.getVisible()]));   // za vracanje njihovog stanja pri zatvaranju
+    // bijele linije: filter na canvasu samo dok se crtaju njihovi slojevi linija
+    linesLayers(map).forEach((l) => {
+      const pre = (e) => { if (whiteLines && e.context) e.context.filter = 'invert(1) drop-shadow(0 0 1px rgba(0,0,0,.9))'; };
+      const post = (e) => { if (e.context) e.context.filter = 'none'; };
+      l.on('prerender', pre); l.on('postrender', post); bases.hooks.push([l, pre, post]);
+    });
+    applyBase(map);
+  }
+  function applyBase(map) {
+    if (!bases) return;
+    const ortho = findLayer(map, /^Орто/);
+    const ours = baseKey === 'esri' ? bases.esri : baseKey === 'osm' ? bases.osm : null;
+    if (baseKey !== 'rgurs' && !ours) baseKey = 'rgurs';                                  // nasa podloga nije dostupna
+    if (bases.esri) bases.esri.setVisible(baseKey === 'esri');
+    if (bases.osm) bases.osm.setVisible(baseKey === 'osm');
+    if (ortho) ortho.setVisible(baseKey === 'rgurs');
+    map.render();
+  }
+  function removeBases(map) {
+    if (!bases) return;
+    bases.hooks.forEach(([l, pre, post]) => { l.un('prerender', pre); l.un('postrender', post); });
+    [bases.esri, bases.osm].forEach((l) => { if (l) map.removeLayer(l); });
+    bases.saved.forEach(([l, v]) => { if (l !== bases.esri && l !== bases.osm) l.setVisible(v); });
+    bases = null;
+  }
+
+  /** Panel slojeva: podloge (jedna) + njihovi slojevi (prekidaci) + boja linija */
   function renderLayers() {
     const map = getMap(); const box = refs.layers; box.textContent = '';
-    box.append(h('h4', null, 'Слојеви'));
+    const row = (label, on, fn, radio) => {
+      const r = h('button', 'lrow' + (on ? ' on' : '') + (radio ? ' radio' : '')); r.append(h('span', null, label), h('span', radio ? 'rd' : 'sw'));
+      r.onclick = fn; return r;
+    };
+    box.append(h('h4', null, 'Podloga'));
+    const opts = [];
+    if (bases && bases.esri) opts.push(['esri', 'Satelit (Esri)']);
+    if (bases && bases.osm) opts.push(['osm', 'Mapa (OpenStreetMap)']);
+    if (findLayer(map, /^Орто/)) opts.push(['rgurs', 'Ortofoto RGURS']);
+    opts.forEach(([k, label]) => box.append(row(label, baseKey === k, () => { baseKey = k; lsSet(BASE_KEY, k); applyBase(map); renderLayers(); }, true)));
+    box.append(h('h4', null, 'Slojevi'));
+    let n = 0;
     allLayers(map.getLayers(), []).forEach((l) => {
       const title = l.get('title');
       const vec = l.getSource && l.getSource() && typeof l.getSource().getFeatures === 'function';
-      if (!title || vec || l === gpsLayer) return;
-      const row = h('button', 'lrow' + (l.getVisible() ? ' on' : '')); row.append(h('span', null, title), h('span', 'sw'));
-      row.onclick = () => { l.setVisible(!l.getVisible()); row.classList.toggle('on', l.getVisible()); };
-      box.append(row);
+      if (!title || vec || l === gpsLayer || (bases && (l === bases.esri || l === bases.osm)) || /^Орто/.test(title)) return;
+      n++;
+      const r = row(title, l.getVisible(), () => { l.setVisible(!l.getVisible()); r.classList.toggle('on', l.getVisible()); });
+      box.append(r);
     });
-    if (box.children.length === 1) box.append(h('div', 'none', 'Нема слојева'));
+    if (!n) box.append(h('div', 'none', 'Nema slojeva'));
+    box.append(row('Bijele linije parcela', whiteLines, function () { whiteLines = !whiteLines; lsSet(LINES_KEY, whiteLines); this.classList.toggle('on', whiteLines); getMap().render(); }));
+    box.append(h('div', 'credit', 'Esri, Maxar, Earthstar Geographics · © OpenStreetMap'));
+    // visina panela: do donjeg panela (ili do dna ekrana u landscape-u), sa unutrasnjim skrolom
+    const sh = refs.sheet.getBoundingClientRect(), top = box.getBoundingClientRect().top;
+    box.style.maxHeight = Math.max(160, (sh.width > innerWidth * 0.7 ? sh.top : innerHeight) - top - 10) + 'px';
   }
   function sync() {
     const map = getMap();
