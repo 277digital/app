@@ -24,7 +24,7 @@ console.log('1) MAPA BEZ PRETRAGE (bez captche)');
   note(!!d && /Površina \| 812 m²/.test(d) && /Vrsta \| Voćnjak/.test(d), 'dodir na parcelu: povrsina i vrsta bez ikakve pretrage: ' + (d || 'nema').slice(0, 120));
   await p.waitForTimeout(1400);
   const stt = await p.evaluate(() => document.querySelector('#kgrs .st').innerText.replace(/\n/g, ' | '));
-  note(!/tražene parcele|IZVAN|UNUTAR/.test(stt) && /Pozicija prikazana/.test(stt), 'GPS u direct nacinu ne pominje "trazenu parcelu": ' + stt);
+  note(!/tražene parcele|IZVAN|UNUTAR/.test(stt) && /Pozicija prikazana|Slab GPS/.test(stt), 'GPS u direct nacinu ne pominje "trazenu parcelu": ' + stt);
   await p.click('#kgrs .top .rb'); await p.waitForTimeout(1500);
   const af = await p.evaluate(() => ({ on: document.getElementById('kgrs').classList.contains('on'), tgt: map.getTargetElement().id, btn: getComputedStyle(document.getElementById('kgrs-mapbtn')).display, leftovers: document.querySelectorAll('.kgrs-fs,.kgrs-force-hide,#kgrsmap').length, scroll: (() => { const d = document.getElementById('d_all'); d.scrollTo(0, 0); const a = d.scrollTop; d.scrollTo(0, 120); return d.scrollTop !== a; })() }));
   note(!af.on && af.tgt === 'mapdiv' && af.btn !== 'none' && af.leftovers === 0 && af.scroll, 'zatvaranje: mapa vracena njihovoj stranici, dugme "Mapa" opet vidljivo, skrol radi: ' + JSON.stringify(af));
